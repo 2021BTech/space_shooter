@@ -102,33 +102,33 @@ function getEnemyTex(type: EnemyType): THREE.CanvasTexture {
   return textureCache.get(type)!;
 }
 
-export function createEnemy(type: EnemyType, x: number, y: number, difficulty: number): EnemyData {
+export function createEnemy(type: EnemyType, x: number, y: number, difficulty: number, scale: number = 1): EnemyData {
   const tex = getEnemyTex(type);
   const speedMult = 1 + difficulty * 0.1;
-  let size = 0.8;
+  let size = 0.8 * scale;
   let hp = 1;
   let speed = ENEMY_BASE_SPEED;
   let fireInterval = 0;
 
   switch (type) {
     case 'basic':
-      size = 0.8;
+      size = 0.8 * scale;
       hp = 1;
       speed = ENEMY_BASE_SPEED * speedMult;
       break;
     case 'shooter':
-      size = 0.9;
+      size = 0.9 * scale;
       hp = 1;
       speed = ENEMY_BASE_SPEED * 0.8 * speedMult;
       fireInterval = 2.0 / speedMult;
       break;
     case 'fast':
-      size = 0.6;
+      size = 0.6 * scale;
       hp = 1;
       speed = ENEMY_BASE_SPEED * 1.8 * speedMult;
       break;
     case 'tank':
-      size = 1.2;
+      size = 1.2 * scale;
       hp = 3;
       speed = ENEMY_BASE_SPEED * 0.5 * speedMult;
       fireInterval = 3.0 / speedMult;

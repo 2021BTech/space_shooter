@@ -7,6 +7,7 @@ export interface GameStateData {
   score: number;
   lives: number;
   powerUp: PowerUpType | null;
+  level: number;
 }
 
 export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
@@ -16,6 +17,7 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
     score: 0,
     lives: 3,
     powerUp: null,
+    level: 1,
   });
 
   const initGame = useCallback(() => {
@@ -26,7 +28,7 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
 
     const game = new Game(canvasRef.current, {
       onScoreChange: (score) => {
-        setGameData((prev) => ({ ...prev, score }));
+        setGameData((prev) => ({ ...prev, score, level: game.getLevel() }));
       },
       onLivesChange: (lives) => {
         setGameData((prev) => ({ ...prev, lives }));
@@ -36,6 +38,9 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
       },
       onGameOver: (score) => {
         setGameData((prev) => ({ ...prev, state: GameState.GAME_OVER, score }));
+      },
+      onStateChange: (state) => {
+        setGameData((prev) => ({ ...prev, state }));
       },
     });
 
@@ -51,10 +56,15 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
         score: 0,
         lives: 3,
         powerUp: null,
+        level: 1,
       });
       game.start();
     }
   }, [initGame]);
+
+  const togglePause = useCallback(() => {
+    gameRef.current?.togglePause();
+  }, []);
 
   const handleRestart = useCallback(() => {
     setGameData({
@@ -62,6 +72,7 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
       score: 0,
       lives: 3,
       powerUp: null,
+      level: 1,
     });
   }, []);
 
@@ -90,6 +101,7 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
     gameData,
     initGame,
     startGame,
+    togglePause,
     handleRestart,
     setTouch,
     clearTouch,

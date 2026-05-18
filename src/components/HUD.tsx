@@ -3,7 +3,9 @@ import { PowerUpType } from '../game/types';
 interface HUDProps {
   score: number;
   lives: number;
+  level: number;
   powerUp: PowerUpType | null;
+  onPause: () => void;
 }
 
 const powerUpLabels: Record<PowerUpType, string> = {
@@ -20,7 +22,7 @@ const powerUpColors: Record<PowerUpType, string> = {
   rapid: '#ff4444',
 };
 
-export function HUD({ score, lives, powerUp }: HUDProps) {
+export function HUD({ score, lives, level, powerUp, onPause }: HUDProps) {
   return (
     <div style={{
       position: 'absolute',
@@ -42,9 +44,17 @@ export function HUD({ score, lives, powerUp }: HUDProps) {
         <div style={{ fontSize: 28, fontWeight: 'bold', letterSpacing: 2 }}>
           {String(score).padStart(6, '0')}
         </div>
+        <div style={{ fontSize: 12, opacity: 0.4, marginTop: 2 }}>
+          LEVEL {level}
+        </div>
       </div>
 
-      <div style={{ textAlign: 'center' }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 4,
+      }}>
         {powerUp && (
           <div style={{
             fontSize: 14,
@@ -55,6 +65,26 @@ export function HUD({ score, lives, powerUp }: HUDProps) {
             {powerUpLabels[powerUp]}
           </div>
         )}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onPause();
+          }}
+          style={{
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 4,
+            color: '#fff',
+            fontFamily: "'Courier New', monospace",
+            fontSize: 11,
+            padding: '4px 12px',
+            cursor: 'pointer',
+            pointerEvents: 'auto',
+            letterSpacing: 1,
+          }}
+        >
+          II
+        </button>
       </div>
 
       <div style={{ textAlign: 'right' }}>

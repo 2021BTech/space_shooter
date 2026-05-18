@@ -48,9 +48,10 @@ function getEnemyBulletTex(): THREE.CanvasTexture {
   return _enemyBulletTex;
 }
 
-export function createBullet(x: number, y: number, isEnemy: boolean): BulletData {
+export function createBullet(x: number, y: number, isEnemy: boolean, scale: number = 1): BulletData {
   const tex = isEnemy ? getEnemyBulletTex() : getBulletTex();
-  const geo = new THREE.PlaneGeometry(0.25, 0.25);
+  const s = 0.25 * scale;
+  const geo = new THREE.PlaneGeometry(s, s);
   const mat = new THREE.MeshBasicMaterial({
     map: tex,
     transparent: true,
@@ -59,9 +60,10 @@ export function createBullet(x: number, y: number, isEnemy: boolean): BulletData
   });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.set(x, y, 0);
+  const speed = isEnemy ? -4 * scale : 10 * scale;
   return {
     mesh,
-    velocity: new THREE.Vector2(0, isEnemy ? -4 : 10),
+    velocity: new THREE.Vector2(0, speed),
     isEnemy,
     alive: true,
   };

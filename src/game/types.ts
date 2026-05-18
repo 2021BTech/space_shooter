@@ -3,6 +3,7 @@ import * as THREE from 'three';
 export const GameState = {
   START: 'start',
   PLAYING: 'playing',
+  PAUSED: 'paused',
   GAME_OVER: 'game_over',
 } as const;
 export type GameState = (typeof GameState)[keyof typeof GameState];
@@ -70,6 +71,7 @@ export interface GameCallbacks {
   onLivesChange: (lives: number) => void;
   onPowerUpChange: (powerUp: PowerUpType | null) => void;
   onGameOver: (score: number) => void;
+  onStateChange: (state: GameState) => void;
 }
 
 export const GAME_WIDTH = 20;

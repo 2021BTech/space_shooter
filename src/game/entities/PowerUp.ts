@@ -63,9 +63,10 @@ function getPowerUpTex(type: PowerUpType): THREE.CanvasTexture {
   return textureCache.get(type)!;
 }
 
-export function createPowerUp(type: PowerUpType, x: number, y: number): PowerUpData {
+export function createPowerUp(type: PowerUpType, x: number, y: number, scale: number = 1): PowerUpData {
   const tex = getPowerUpTex(type);
-  const geo = new THREE.PlaneGeometry(0.6, 0.6);
+  const s = 0.6 * scale;
+  const geo = new THREE.PlaneGeometry(s, s);
   const mat = new THREE.MeshBasicMaterial({
     map: tex,
     transparent: true,
@@ -79,7 +80,7 @@ export function createPowerUp(type: PowerUpType, x: number, y: number): PowerUpD
   return {
     mesh,
     type,
-    velocity: new THREE.Vector2(0, -1.5),
+    velocity: new THREE.Vector2(0, -1.5 * scale),
     alive: true,
   };
 }

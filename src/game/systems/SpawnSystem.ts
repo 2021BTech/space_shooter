@@ -10,6 +10,7 @@ export class SpawnSystem {
   private scene: THREE.Scene;
   private width: number;
   private height: number;
+  private scale = 1;
 
   constructor(scene: THREE.Scene, width: number, height: number) {
     this.scene = scene;
@@ -27,6 +28,10 @@ export class SpawnSystem {
     this.spawnInterval = Math.max(0.4, 1.5 - this.difficulty * 0.1);
   }
 
+  setScale(s: number): void {
+    this.scale = s;
+  }
+
   update(dt: number): { newEnemies: EnemyData[]; newPowerUps: PowerUpData[] } {
     const newEnemies: EnemyData[] = [];
     const newPowerUps: PowerUpData[] = [];
@@ -38,13 +43,13 @@ export class SpawnSystem {
       const y = this.height + 1;
 
       const type = this.pickEnemyType();
-      const enemy = createEnemy(type, x, y, this.difficulty);
+      const enemy = createEnemy(type, x, y, this.difficulty, this.scale);
       newEnemies.push(enemy);
       this.scene.add(enemy.mesh);
 
       if (Math.random() < 0.15) {
         const puType = this.pickPowerUpType();
-        const pu = createPowerUp(puType, x + (Math.random() - 0.5) * 2, y);
+        const pu = createPowerUp(puType, x + (Math.random() - 0.5) * 2, y, this.scale);
         newPowerUps.push(pu);
         this.scene.add(pu.mesh);
       }

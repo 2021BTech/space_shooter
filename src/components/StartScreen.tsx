@@ -15,14 +15,39 @@ export function StartScreen({ onStart }: StartScreenProps) {
       zIndex: 20,
       fontFamily: "'Courier New', monospace",
       color: '#fff',
+      overflow: 'hidden',
     }}>
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+      }}>
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div key={i} style={{
+            position: 'absolute',
+            width: 2 + Math.random() * 3,
+            height: 2 + Math.random() * 3,
+            borderRadius: '50%',
+            background: i % 2 === 0 ? 'rgba(100,180,255,0.4)' : 'rgba(255,100,100,0.3)',
+            left: `${10 + Math.random() * 80}%`,
+            top: `${10 + Math.random() * 60}%`,
+            animation: `drift${i} ${4 + Math.random() * 3}s ease-in-out infinite alternate`,
+            boxShadow: i % 2 === 0
+              ? '0 0 6px rgba(100,180,255,0.3)'
+              : '0 0 6px rgba(255,100,100,0.3)',
+          }} />
+        ))}
+      </div>
+
       <h1 style={{
         fontSize: 52,
         fontWeight: 'bold',
         letterSpacing: 6,
-        textShadow: '0 0 30px rgba(0,150,255,0.6), 0 0 60px rgba(0,100,255,0.3)',
+        textShadow: '0 0 20px rgba(0,150,255,0.4)',
+        animation: 'glowBlue 2s ease-in-out infinite alternate',
         margin: 0,
         marginBottom: 8,
+        position: 'relative',
       }}>
         SPACE
       </h1>
@@ -30,10 +55,12 @@ export function StartScreen({ onStart }: StartScreenProps) {
         fontSize: 52,
         fontWeight: 'bold',
         letterSpacing: 6,
-        textShadow: '0 0 30px rgba(255,50,50,0.6), 0 0 60px rgba(255,0,0,0.3)',
+        textShadow: '0 0 20px rgba(255,50,50,0.4)',
+        animation: 'glowRed 2s ease-in-out infinite alternate',
         margin: 0,
         marginBottom: 30,
         marginTop: -10,
+        position: 'relative',
       }}>
         SHOOTER
       </h1>
@@ -45,6 +72,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
         letterSpacing: 2,
         textAlign: 'center',
         lineHeight: 1.8,
+        position: 'relative',
       }}>
         ARROWS / WASD — Move &nbsp;|&nbsp; SPACE — Fire
       </div>
@@ -62,16 +90,22 @@ export function StartScreen({ onStart }: StartScreenProps) {
           border: '2px solid rgba(0,150,255,0.5)',
           borderRadius: 4,
           cursor: 'pointer',
-          boxShadow: '0 0 30px rgba(0,100,255,0.3)',
+          boxShadow: '0 0 20px rgba(0,100,255,0.2)',
+          animation: 'btnPulse 2s ease-in-out infinite alternate',
           transition: 'all 0.2s',
+          position: 'relative',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'linear-gradient(135deg, #0088ff, #0066dd)';
           e.currentTarget.style.boxShadow = '0 0 40px rgba(0,100,255,0.5)';
+          e.currentTarget.style.borderColor = 'rgba(0,150,255,0.8)';
+          e.currentTarget.style.animation = 'none';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = 'linear-gradient(135deg, #0066ff, #0044cc)';
-          e.currentTarget.style.boxShadow = '0 0 30px rgba(0,100,255,0.3)';
+          e.currentTarget.style.boxShadow = '0 0 20px rgba(0,100,255,0.2)';
+          e.currentTarget.style.borderColor = 'rgba(0,150,255,0.5)';
+          e.currentTarget.style.animation = 'btnPulse 2s ease-in-out infinite alternate';
         }}
       >
         START GAME
@@ -82,6 +116,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
         fontSize: 11,
         opacity: 0.3,
         letterSpacing: 1,
+        position: 'relative',
       }}>
         Press ENTER to start
       </div>

@@ -3,6 +3,51 @@
   50% { opacity: 0.5; }
 }
 
+@keyframes glowBlue {
+  from { text-shadow: 0 0 20px rgba(0,150,255,0.4); }
+  to   { text-shadow: 0 0 40px rgba(0,150,255,0.8), 0 0 80px rgba(0,100,255,0.3); }
+}
+
+@keyframes glowRed {
+  from { text-shadow: 0 0 20px rgba(255,50,50,0.4); }
+  to   { text-shadow: 0 0 40px rgba(255,50,50,0.8), 0 0 80px rgba(255,0,0,0.3); }
+}
+
+@keyframes btnPulse {
+  from { box-shadow: 0 0 20px rgba(0,100,255,0.2); }
+  to   { box-shadow: 0 0 40px rgba(0,100,255,0.5); }
+}
+
+@keyframes drift0 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(15px, -20px); }
+}
+
+@keyframes drift1 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-12px, 18px); }
+}
+
+@keyframes drift2 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(20px, 10px); }
+}
+
+@keyframes drift3 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-18px, -15px); }
+}
+
+@keyframes drift4 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(10px, -25px); }
+}
+
+@keyframes drift5 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-8px, 22px); }
+}
+
 .app-root {
   position: fixed;
   inset: 0;

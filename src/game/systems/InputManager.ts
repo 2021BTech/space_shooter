@@ -4,6 +4,7 @@ export class InputManager {
   private _touchY = 0;
   private _touchActive = false;
   private _touchFire = false;
+  private _pauseToggle = false;
 
   constructor() {
     this.onKeyDown = this.onKeyDown.bind(this);
@@ -13,6 +14,9 @@ export class InputManager {
   }
 
   private onKeyDown(e: KeyboardEvent): void {
+    if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+      this._pauseToggle = true;
+    }
     this.keys.add(e.key);
   }
 
@@ -68,6 +72,18 @@ export class InputManager {
 
   setTouchFire(firing: boolean): void {
     this._touchFire = firing;
+  }
+
+  consumePauseToggle(): boolean {
+    if (this._pauseToggle) {
+      this._pauseToggle = false;
+      return true;
+    }
+    return false;
+  }
+
+  triggerPauseToggle(): void {
+    this._pauseToggle = true;
   }
 
   destroy(): void {

@@ -47,7 +47,7 @@ export function TouchControls({ onTouch, onTouchEnd, onFire }: TouchControlsProp
     const ny = (clampedDist / maxDist) * Math.sin(angle);
 
     knobRef.current.style.transform = `translate(${nx}px, ${ny}px)`;
-    onTouch(nx, ny);
+    onTouch(nx, -ny);
   }, [onTouch]);
 
   const handleJoystickEnd = useCallback(() => {

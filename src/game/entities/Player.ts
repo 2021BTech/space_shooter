@@ -54,9 +54,9 @@ export class Player {
   private shieldMesh: THREE.Mesh | null = null;
   private engineGlow: THREE.Mesh | null = null;
 
-  constructor(scene: THREE.Scene) {
+  constructor(scene: THREE.Scene, s: number = 1) {
     const tex = createPlayerTexture();
-    const geo = new THREE.PlaneGeometry(1.2, 1.2);
+    const geo = new THREE.PlaneGeometry(1.2 * s, 1.2 * s);
     const mat = new THREE.MeshBasicMaterial({
       map: tex,
       transparent: true,
@@ -67,7 +67,7 @@ export class Player {
     this.mesh.renderOrder = 1;
     scene.add(this.mesh);
 
-    const glowGeo = new THREE.PlaneGeometry(1.6, 1.6);
+    const glowGeo = new THREE.PlaneGeometry(1.6 * s, 1.6 * s);
     const glowMat = new THREE.MeshBasicMaterial({
       color: 0x0088ff,
       transparent: true,
@@ -96,7 +96,7 @@ export class Player {
     const shieldTex = new THREE.CanvasTexture(shieldCanvas);
     shieldTex.needsUpdate = true;
 
-    const shieldGeo = new THREE.PlaneGeometry(2.0, 2.0);
+    const shieldGeo = new THREE.PlaneGeometry(2.0 * s, 2.0 * s);
     const shieldMat = new THREE.MeshBasicMaterial({
       map: shieldTex,
       transparent: true,

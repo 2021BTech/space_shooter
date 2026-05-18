@@ -40,7 +40,7 @@ export class Game {
   private audio: AudioManager;
   private starfield: Starfield;
 
-  private state: GameState = GS.START;
+  private _state: GameState = GS.START;
   private score = 0;
   private lives = 3;
   private activePowerUp: { type: PowerUpType; remaining: number } | null = null;
@@ -48,6 +48,11 @@ export class Game {
   private animFrameId: number = 0;
   private lastTime = 0;
   private gameHeight = 0;
+  private _entityScale = 1;
+
+  get state(): GameState {
+    return this._state;
+  }
 
   constructor(canvas: HTMLCanvasElement, callbacks: GameCallbacks) {
     this.callbacks = callbacks;
@@ -92,11 +97,13 @@ export class Game {
     this.particles = new ParticleSystem(this.scene);
     this.audio = new AudioManager();
 
-    this.player = new Player(this.scene);
+    this._entityScale = Math.max(1, Math.min(2.5, 700 / canvas.clientWidth));
+    this.player = new Player(this.scene, this._entityScale);
     this.player.setBounds(GAME_WIDTH / 2, this.gameHeight / 2);
 
     this.starfield = new Starfield(this.scene, GAME_WIDTH / 2, this.gameHeight / 2);
     this.spawn = new SpawnSystem(this.scene, GAME_WIDTH / 2, this.gameHeight / 2);
+    this.spawn.setScale(this._entityScale);
 
     this.handleResize = this.handleResize.bind(this);
     window.addEventListener('resize', this.handleResize);
@@ -107,7 +114,7 @@ export class Game {
 
   start(): void {
     this.reset();
-    this.state = GS.PLAYING;
+    this._state = GS.PLAYING;
     this.lastTime = performance.now();
     this.loop(this.lastTime);
   }
@@ -152,11 +159,15 @@ export class Game {
   private loop(time: number): void {
     this.animFrameId = requestAnimationFrame(this.loop);
 
+    if (this.input.consumePauseToggle()) {
+      this.togglePause();
+    }
+
     const rawDt = (time - this.lastTime) / 1000;
     const dt = Math.min(rawDt, 0.05);
     this.lastTime = time;
 
-    if (this.state === GS.PLAYING) {
+    if (this._state === GS.PLAYING) {
       this.update(dt);
     }
 
@@ -203,33 +214,35 @@ export class Game {
   private spawnBullets(spread: boolean): void {
     const px = this.player.mesh.position.x;
     const py = this.player.mesh.position.y;
+    const s = this._entityScale;
 
     if (spread) {
       for (let i = -1; i <= 1; i++) {
-        const bullet = createBullet(px + i * 0.3, py + 0.6, false);
-        bullet.velocity.set(Math.sin(i * 0.4) * 3 + 10, 10);
+        const bullet = createBullet(px + i * 0.3 * s, py + 0.6 * s, false, s);
+        bullet.velocity.set((Math.sin(i * 0.4) * 3 + 10) * s, 10 * s);
         this.bullets.push(bullet);
         this.scene.add(bullet.mesh);
       }
     } else {
-      const bullet = createBullet(px, py + 0.6, false);
+      const bullet = createBullet(px, py + 0.6 * s, false, s);
       this.bullets.push(bullet);
       this.scene.add(bullet.mesh);
     }
   }
 
   private updateEnemyShooting(dt: number): void {
+    const s = this._entityScale;
     for (const enemy of this.enemies) {
       if (!enemy.alive || enemy.fireInterval <= 0) continue;
       enemy.shootTimer -= dt;
       if (enemy.shootTimer <= 0) {
         enemy.shootTimer = enemy.fireInterval;
-        const bullet = createBullet(enemy.mesh.position.x, enemy.mesh.position.y - 0.5, true);
+        const bullet = createBullet(enemy.mesh.position.x, enemy.mesh.position.y - 0.5 * s, true, s);
         const dx = this.player.mesh.position.x - enemy.mesh.position.x;
         const dy = this.player.mesh.position.y - enemy.mesh.position.y;
         const len = Math.sqrt(dx * dx + dy * dy);
         if (len > 0) {
-          bullet.velocity.set((dx / len) * 5, (dy / len) * 5);
+          bullet.velocity.set((dx / len) * 5 * s, (dy / len) * 5 * s);
         }
         this.bullets.push(bullet);
         this.scene.add(bullet.mesh);
@@ -313,6 +326,21 @@ export class Game {
         this.callbacks.onPowerUpChange(null);
       }
     }
+  }
+
+  togglePause(): void {
+    if (this._state === GS.PLAYING) {
+      this._state = GS.PAUSED;
+      this.callbacks.onStateChange(GS.PAUSED);
+    } else if (this._state === GS.PAUSED) {
+      this._state = GS.PLAYING;
+      this.lastTime = performance.now();
+      this.callbacks.onStateChange(GS.PLAYING);
+    }
+  }
+
+  getLevel(): number {
+    return Math.floor(this.score / 500) + 1;
   }
 
   private difficultyScaling(): void {
@@ -465,7 +493,7 @@ export class Game {
       );
       this.player.mesh.visible = false;
       this.audio.playGameOver();
-      this.state = GS.GAME_OVER;
+      this._state = GS.GAME_OVER;
       this.callbacks.onGameOver(this.score);
     } else {
       this.player.mesh.position.set(0, -4, 0);
@@ -519,9 +547,11 @@ export class Game {
       const bloom = this.composer.passes[1] as UnrealBloomPass;
       bloom.resolution.set(width, height);
 
+      this._entityScale = Math.max(1, Math.min(2.5, 700 / width));
       this.player.setBounds(GAME_WIDTH / 2, this.gameHeight / 2);
       this.starfield.resize(GAME_WIDTH / 2, this.gameHeight / 2);
       this.spawn.setSize(GAME_WIDTH / 2, this.gameHeight / 2);
+      this.spawn.setScale(this._entityScale);
     }
   }
 
