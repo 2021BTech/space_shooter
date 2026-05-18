@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { submitScore } from '../services/leaderboardService';
 
 const STORAGE_KEY = 'space-shooter-player-name';
@@ -15,15 +15,6 @@ export function GameOverScreen({ score, level, onRestart }: GameOverScreenProps)
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [lowerScoreMsg, setLowerScoreMsg] = useState('');
-
-  useEffect(() => {
-    return () => {
-      const current = localStorage.getItem(STORAGE_KEY);
-      if (current) {
-        setPlayerName(current);
-      }
-    };
-  }, []);
 
   async function handleSubmit() {
     const name = playerName.trim();
@@ -168,8 +159,16 @@ export function GameOverScreen({ score, level, onRestart }: GameOverScreenProps)
             {submitting ? 'SUBMITTING...' : 'SUBMIT SCORE'}
           </button>
           {submitError && (
-            <div style={{ fontSize: 11, color: '#ff6666', opacity: 0.7 }}>
-              Failed to submit. Try again.
+            <div style={{
+              fontSize: 13,
+              color: '#ff6666',
+              background: 'rgba(255,50,50,0.1)',
+              border: '1px solid rgba(255,50,50,0.3)',
+              borderRadius: 4,
+              padding: '8px 16px',
+              opacity: 1,
+            }}>
+              Failed to submit — check leaderboard table RLS policies
             </div>
           )}
           {lowerScoreMsg && (

@@ -185,6 +185,18 @@ export function StartScreen({ onStart }: StartScreenProps) {
       >
         Press ENTER to start
       </div>
+
+      <div
+        style={{
+          marginTop: 8,
+          fontSize: 10,
+          opacity: 0.25,
+          letterSpacing: 1.5,
+          position: "relative",
+        }}
+      >
+        powered by beconwave solutions
+      </div>
     </div>
   );
 }

@@ -47,13 +47,14 @@ export async function submitScore(name: string, score: number, level: number): P
         return { submitted: false, reason: 'lower_score', bestScore: existing.score };
       }
 
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from('leaderboard')
         .update({ score, level })
-        .eq('name', name);
+        .eq('name', name)
+        .select();
 
-      if (error) {
-        console.error('Error updating score:', error);
+      if (error || !updated || updated.length === 0) {
+        console.error('Error updating score:', error || 'No rows matched for update');
         return { submitted: false, reason: 'error' };
       }
 
