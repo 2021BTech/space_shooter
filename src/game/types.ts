@@ -21,6 +21,7 @@ export const PowerUpType = {
   SHIELD: 'shield',
   SPEED: 'speed',
   RAPID: 'rapid',
+  EXTRA_LIFE: 'extra_life',
 } as const;
 export type PowerUpType = (typeof PowerUpType)[keyof typeof PowerUpType];
 

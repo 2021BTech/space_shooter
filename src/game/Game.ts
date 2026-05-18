@@ -450,17 +450,23 @@ export class Game {
       if (!powerup.alive) continue;
       powerup.alive = false;
 
-      if (this.activePowerUp) {
-        this.player.clearPowerUp(this.activePowerUp.type);
+      if (powerup.type === 'extra_life') {
+        this.lives = Math.min(this.lives + 1, 5);
+        this.callbacks.onLivesChange(this.lives);
+        this.audio.playPowerUp();
+      } else {
+        if (this.activePowerUp) {
+          this.player.clearPowerUp(this.activePowerUp.type);
+        }
+        this.activePowerUp = {
+          type: powerup.type,
+          remaining: 8,
+        };
+        this.player.applyPowerUp(powerup.type);
+        this.callbacks.onPowerUpChange(powerup.type);
+        this.audio.playPowerUp();
       }
 
-      this.activePowerUp = {
-        type: powerup.type,
-        remaining: 8,
-      };
-      this.player.applyPowerUp(powerup.type);
-      this.callbacks.onPowerUpChange(powerup.type);
-      this.audio.playPowerUp();
       this.particles.createExplosion(
         powerup.mesh.position.x,
         powerup.mesh.position.y,
@@ -524,6 +530,7 @@ export class Game {
       case 'shield': return 0x4488ff;
       case 'speed': return 0xffff44;
       case 'rapid': return 0xff4444;
+      case 'extra_life': return 0xff3366;
     }
   }
 

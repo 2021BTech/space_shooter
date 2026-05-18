@@ -11,79 +11,163 @@ function createEnemyTexture(type: EnemyType): THREE.CanvasTexture {
 
   switch (type) {
     case 'basic': {
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30);
-      g.addColorStop(0, '#ff6666');
-      g.addColorStop(0.5, '#cc2222');
-      g.addColorStop(1, '#881111');
-      ctx.fillStyle = g;
+      ctx.fillStyle = '#cc2222';
       ctx.beginPath();
-      ctx.moveTo(cx, cy - 24);
-      ctx.lineTo(cx + 24, cy);
-      ctx.lineTo(cx, cy + 24);
-      ctx.lineTo(cx - 24, cy);
+      ctx.moveTo(cx, cy - 28);
+      ctx.lineTo(cx + 26, cy - 4);
+      ctx.lineTo(cx + 18, cy + 18);
+      ctx.lineTo(cx, cy + 26);
+      ctx.lineTo(cx - 18, cy + 18);
+      ctx.lineTo(cx - 26, cy - 4);
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = '#ff4444';
+
+      ctx.fillStyle = '#881111';
+      ctx.beginPath();
+      ctx.ellipse(cx - 6, cy - 2, 4, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx + 6, cy - 2, 4, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ff4444';
+      ctx.beginPath();
+      ctx.arc(cx - 6, cy - 3, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + 6, cy - 3, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#aa0000';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 8, 6, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#ff6666';
       ctx.lineWidth = 1;
       ctx.stroke();
+
+      ctx.fillStyle = '#ff3333';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 20);
+      ctx.lineTo(cx - 6, cy - 10);
+      ctx.lineTo(cx + 6, cy - 10);
+      ctx.closePath();
+      ctx.fill();
       break;
     }
     case 'shooter': {
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30);
-      g.addColorStop(0, '#ffaa44');
-      g.addColorStop(0.5, '#dd6600');
-      g.addColorStop(1, '#993300');
-      ctx.fillStyle = g;
+      ctx.fillStyle = '#cc5500';
       ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-        const r = 24;
-        const x = cx + Math.cos(angle) * r;
-        const y = cy + Math.sin(angle) * r;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
+      ctx.moveTo(cx - 24, cy - 10);
+      ctx.lineTo(cx + 24, cy - 10);
+      ctx.lineTo(cx + 28, cy + 4);
+      ctx.lineTo(cx + 20, cy + 20);
+      ctx.lineTo(cx - 20, cy + 20);
+      ctx.lineTo(cx - 28, cy + 4);
       ctx.closePath();
       ctx.fill();
+
+      ctx.fillStyle = '#993300';
+      ctx.fillRect(cx - 4, cy - 16, 8, 20);
+
+      ctx.fillStyle = '#ff8800';
+      ctx.beginPath();
+      ctx.arc(cx, cy - 2, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffcc00';
+      ctx.beginPath();
+      ctx.arc(cx, cy - 2, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#884400';
+      ctx.fillRect(cx - 20, cy + 10, 6, 14);
+      ctx.fillRect(cx + 14, cy + 10, 6, 14);
+
+      ctx.fillStyle = '#ff4400';
+      ctx.fillRect(cx - 19, cy + 12, 4, 10);
+      ctx.fillRect(cx + 15, cy + 12, 4, 10);
+
       ctx.strokeStyle = '#ff8800';
       ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.fillStyle = '#ffcc44';
-      ctx.beginPath();
-      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-      ctx.fill();
       break;
     }
     case 'fast': {
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 28);
-      g.addColorStop(0, '#ffff66');
-      g.addColorStop(0.5, '#ddcc00');
-      g.addColorStop(1, '#998800');
-      ctx.fillStyle = g;
+      ctx.fillStyle = '#cc9900';
       ctx.beginPath();
-      ctx.moveTo(cx, cy - 22);
-      ctx.lineTo(cx + 22, cy + 14);
-      ctx.lineTo(cx, cy + 6);
-      ctx.lineTo(cx - 22, cy + 14);
+      ctx.moveTo(cx, cy - 28);
+      ctx.lineTo(cx + 22, cy + 6);
+      ctx.lineTo(cx + 28, cy + 16);
+      ctx.lineTo(cx + 10, cy + 8);
+      ctx.lineTo(cx + 10, cy + 22);
+      ctx.lineTo(cx, cy + 18);
+      ctx.lineTo(cx - 10, cy + 22);
+      ctx.lineTo(cx - 10, cy + 8);
+      ctx.lineTo(cx - 28, cy + 16);
+      ctx.lineTo(cx - 22, cy + 6);
       ctx.closePath();
       ctx.fill();
+
+      ctx.fillStyle = '#ffdd00';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 16);
+      ctx.lineTo(cx + 8, cy - 2);
+      ctx.lineTo(cx, cy + 4);
+      ctx.lineTo(cx - 8, cy - 2);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#ff6600';
+      ctx.fillRect(cx - 6, cy + 12, 4, 10);
+      ctx.fillRect(cx + 2, cy + 12, 4, 10);
+
+      ctx.fillStyle = '#ffaa00';
+      ctx.beginPath();
+      ctx.arc(cx, cy - 6, 3, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.strokeStyle = '#ffee44';
       ctx.lineWidth = 1;
       ctx.stroke();
       break;
     }
     case 'tank': {
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30);
-      g.addColorStop(0, '#aa4444');
-      g.addColorStop(0.5, '#882222');
-      g.addColorStop(1, '#551111');
-      ctx.fillStyle = g;
-      ctx.fillRect(cx - 22, cy - 22, 44, 44);
-      ctx.strokeStyle = '#cc4444';
+      ctx.fillStyle = '#666666';
+      ctx.fillRect(cx - 24, cy - 20, 48, 40);
+
+      ctx.fillStyle = '#555555';
+      ctx.fillRect(cx - 20, cy - 16, 40, 32);
+
+      ctx.fillStyle = '#888888';
+      ctx.beginPath();
+      ctx.arc(cx - 10, cy - 6, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + 10, cy - 6, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#333333';
+      ctx.beginPath();
+      ctx.arc(cx - 10, cy - 6, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + 10, cy - 6, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#444444';
+      ctx.fillRect(cx - 6, cy - 24, 12, 10);
+
+      ctx.fillStyle = '#aa2222';
+      ctx.fillRect(cx - 14, cy + 8, 28, 8);
+
+      ctx.fillStyle = '#ff4444';
+      ctx.fillRect(cx - 12, cy + 9, 24, 2);
+
+      ctx.strokeStyle = '#999999';
       ctx.lineWidth = 2;
-      ctx.strokeRect(cx - 22, cy - 22, 44, 44);
-      ctx.fillStyle = '#cc6666';
-      ctx.fillRect(cx - 8, cy - 8, 16, 16);
+      ctx.strokeRect(cx - 24, cy - 20, 48, 40);
       break;
     }
   }

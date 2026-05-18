@@ -8,46 +8,111 @@ function createPowerUpTexture(type: PowerUpType): THREE.CanvasTexture {
   const ctx = canvas.getContext('2d')!;
   const cx = 24, cy = 24;
 
-  let color1 = '#00ff88', color2 = '#00aa44';
+  ctx.clearRect(0, 0, 48, 48);
 
-  switch (type) {
-    case 'spread':
-      color1 = '#00ff88';
-      color2 = '#009944';
-      break;
-    case 'shield':
-      color1 = '#4488ff';
-      color2 = '#0044cc';
-      break;
-    case 'speed':
-      color1 = '#ffff44';
-      color2 = '#ccaa00';
-      break;
-    case 'rapid':
-      color1 = '#ff4444';
-      color2 = '#cc0000';
-      break;
-  }
-
-  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 24);
-  g.addColorStop(0, '#ffffff');
-  g.addColorStop(0.2, color1);
-  g.addColorStop(0.6, color2);
-  g.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = g;
+  const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 24);
+  bg.addColorStop(0, 'rgba(255,255,255,0.15)');
+  bg.addColorStop(0.5, 'rgba(255,255,255,0.05)');
+  bg.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = bg;
   ctx.beginPath();
   ctx.arc(cx, cy, 24, 0, Math.PI * 2);
   ctx.fill();
 
-  const letter = type === 'spread' ? 'S' :
-    type === 'shield' ? 'D' :
-    type === 'speed' ? '>' :
-    'R';
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 18px monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(letter, cx, cy);
+  switch (type) {
+    case 'extra_life': {
+      ctx.fillStyle = '#ff3366';
+      ctx.shadowColor = '#ff3366';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + 10);
+      ctx.bezierCurveTo(cx - 18, cy - 6, cx - 6, cy - 18, cx, cy - 10);
+      ctx.bezierCurveTo(cx + 6, cy - 18, cx + 18, cy - 6, cx, cy + 10);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      break;
+    }
+    case 'spread': {
+      ctx.fillStyle = '#00ff88';
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = 6;
+      for (let i = -1; i <= 1; i++) {
+        const angle = i * 0.5;
+        const bx = cx + Math.sin(angle) * 12;
+        const by = cy - 8 - Math.cos(angle) * 8;
+        ctx.beginPath();
+        ctx.arc(bx, by, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + 6);
+        ctx.lineTo(bx, by);
+        ctx.strokeStyle = 'rgba(0,255,136,0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      ctx.shadowBlur = 0;
+      break;
+    }
+    case 'shield': {
+      ctx.strokeStyle = '#4488ff';
+      ctx.shadowColor = '#4488ff';
+      ctx.shadowBlur = 8;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 16);
+      ctx.lineTo(cx + 16, cy - 6);
+      ctx.lineTo(cx + 16, cy + 6);
+      ctx.lineTo(cx, cy + 16);
+      ctx.lineTo(cx - 16, cy + 6);
+      ctx.lineTo(cx - 16, cy - 6);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(68,136,255,0.15)';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      break;
+    }
+    case 'speed': {
+      ctx.fillStyle = '#ffff44';
+      ctx.shadowColor = '#ffff44';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(cx + 2, cy - 16);
+      ctx.lineTo(cx - 6, cy - 2);
+      ctx.lineTo(cx + 1, cy - 2);
+      ctx.lineTo(cx - 2, cy + 16);
+      ctx.lineTo(cx + 10, cy + 2);
+      ctx.lineTo(cx + 1, cy + 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      break;
+    }
+    case 'rapid': {
+      ctx.fillStyle = '#ff4444';
+      ctx.shadowColor = '#ff4444';
+      ctx.shadowBlur = 6;
+      for (let i = 0; i < 3; i++) {
+        const r = 2 + i * 1.5;
+        ctx.beginPath();
+        ctx.arc(cx - 6 + i * 6, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(255,68,68,0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx + 10, cy);
+      ctx.lineTo(cx + 16, cy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + 12, cy - 3);
+      ctx.lineTo(cx + 16, cy);
+      ctx.lineTo(cx + 12, cy + 3);
+      ctx.stroke();
+      break;
+    }
+  }
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.needsUpdate = true;

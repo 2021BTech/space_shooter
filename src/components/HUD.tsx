@@ -13,6 +13,7 @@ const powerUpLabels: Record<PowerUpType, string> = {
   shield: 'SHIELD',
   speed: 'SPEED',
   rapid: 'RAPID',
+  extra_life: '+1 ❤',
 };
 
 const powerUpColors: Record<PowerUpType, string> = {
@@ -20,6 +21,7 @@ const powerUpColors: Record<PowerUpType, string> = {
   shield: '#4488ff',
   speed: '#ffff44',
   rapid: '#ff4444',
+  extra_life: '#ff3366',
 };
 
 export function HUD({ score, lives, level, powerUp, onPause }: HUDProps) {

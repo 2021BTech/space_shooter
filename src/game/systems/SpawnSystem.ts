@@ -71,7 +71,7 @@ export class SpawnSystem {
   }
 
   private pickPowerUpType(): PowerUpType {
-    const types: PowerUpType[] = ['spread', 'shield', 'speed', 'rapid'];
+    const types: PowerUpType[] = ['spread', 'shield', 'speed', 'rapid', 'extra_life'];
     return types[Math.floor(Math.random() * types.length)];
   }
 
