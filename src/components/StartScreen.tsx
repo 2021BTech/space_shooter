@@ -1,8 +1,28 @@
+import { useState } from 'react';
+import { Leaderboard } from './Leaderboard';
+
+const STAR_STYLES = [0, 1, 2, 3, 4, 5].map((i) => ({
+  width: 2 + Math.random() * 3,
+  height: 2 + Math.random() * 3,
+  left: `${10 + Math.random() * 80}%`,
+  top: `${10 + Math.random() * 60}%`,
+  animation: `drift${i} ${4 + Math.random() * 3}s ease-in-out infinite alternate`,
+  boxShadow: i % 2 === 0
+    ? '0 0 6px rgba(100,180,255,0.3)'
+    : '0 0 6px rgba(255,100,100,0.3)',
+}));
+
 interface StartScreenProps {
   onStart: () => void;
 }
 
 export function StartScreen({ onStart }: StartScreenProps) {
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+
+  if (showLeaderboard) {
+    return <Leaderboard onClose={() => setShowLeaderboard(false)} />;
+  }
+
   return (
     <div style={{
       position: 'absolute',
@@ -22,22 +42,16 @@ export function StartScreen({ onStart }: StartScreenProps) {
         inset: 0,
         pointerEvents: 'none',
       }}>
-        {[0, 1, 2, 3, 4, 5].map((i) => (
+        {STAR_STYLES.map((style, i) => (
           <div key={i} style={{
             position: 'absolute',
-            width: 2 + Math.random() * 3,
-            height: 2 + Math.random() * 3,
+            ...style,
             borderRadius: '50%',
             background: i % 2 === 0 ? 'rgba(100,180,255,0.4)' : 'rgba(255,100,100,0.3)',
-            left: `${10 + Math.random() * 80}%`,
-            top: `${10 + Math.random() * 60}%`,
-            animation: `drift${i} ${4 + Math.random() * 3}s ease-in-out infinite alternate`,
-            boxShadow: i % 2 === 0
-              ? '0 0 6px rgba(100,180,255,0.3)'
-              : '0 0 6px rgba(255,100,100,0.3)',
           }} />
         ))}
-      </div>
+      </div>  
+      
 
       <h1 style={{
         fontSize: 52,
@@ -109,6 +123,37 @@ export function StartScreen({ onStart }: StartScreenProps) {
         }}
       >
         START GAME
+      </button>
+
+      <button
+        onClick={() => setShowLeaderboard(true)}
+        style={{
+          marginTop: 16,
+          padding: '10px 36px',
+          fontSize: 14,
+          fontFamily: "'Courier New', monospace",
+          fontWeight: 'bold',
+          letterSpacing: 3,
+          color: '#aaccff',
+          background: 'transparent',
+          border: '1px solid rgba(100,180,255,0.3)',
+          borderRadius: 4,
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          position: 'relative',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(0,100,255,0.1)';
+          e.currentTarget.style.borderColor = 'rgba(100,180,255,0.6)';
+          e.currentTarget.style.color = '#fff';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent';
+          e.currentTarget.style.borderColor = 'rgba(100,180,255,0.3)';
+          e.currentTarget.style.color = '#aaccff';
+        }}
+      >
+        LEADERBOARD
       </button>
 
       <div style={{

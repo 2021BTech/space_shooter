@@ -146,6 +146,7 @@ export default function App() {
       {gameData.state === GameState.GAME_OVER && (
         <GameOverScreen
           score={gameData.score}
+          level={gameData.level}
           onRestart={handlePlayAgain}
         />
       )}
