@@ -50,6 +50,12 @@ export class Player {
   spreadActive = false;
   rapidActive = false;
   shieldActive = false;
+  pierceActive = false;
+  bounceActive = false;
+  coinMagnetActive = false;
+  invincible = false;
+  private invincibleTimer = 0;
+  private hitFlashTimer = 0;
   private bounds: { left: number; right: number; top: number; bottom: number };
   private shieldMesh: THREE.Mesh | null = null;
   private engineGlow: THREE.Mesh | null = null;
@@ -121,8 +127,36 @@ export class Player {
     };
   }
 
+  flashHit(): void {
+    this.hitFlashTimer = 0.15;
+    const mat = this.mesh.material as THREE.MeshBasicMaterial;
+    mat.color.setHex(0xff4444);
+  }
+
+  setInvincible(duration: number): void {
+    this.invincible = true;
+    this.invincibleTimer = duration;
+  }
+
   update(dt: number, dx: number, dy: number, firePressed: boolean): { fired: boolean; spread: boolean } {
     if (!this.alive) return { fired: false, spread: false };
+
+    if (this.hitFlashTimer > 0) {
+      this.hitFlashTimer -= dt;
+      if (this.hitFlashTimer <= 0) {
+        (this.mesh.material as THREE.MeshBasicMaterial).color.setHex(0xffffff);
+      }
+    }
+
+    if (this.invincible) {
+      this.invincibleTimer -= dt;
+      if (this.invincibleTimer <= 0) {
+        this.invincible = false;
+        this.mesh.visible = true;
+      } else {
+        this.mesh.visible = Math.sin(this.invincibleTimer * 30) > 0;
+      }
+    }
 
     this.mesh.position.x += dx * this.speed * dt;
     this.mesh.position.y += dy * this.speed * dt;
@@ -162,6 +196,9 @@ export class Player {
     if (type === 'speed') this.speed = PLAYER_SPEED * 1.5;
     if (type === 'shield') this.shieldActive = true;
     if (type === 'rapid') this.rapidActive = true;
+    if (type === 'pierce') this.pierceActive = true;
+    if (type === 'bounce') this.bounceActive = true;
+    if (type === 'coin_magnet') this.coinMagnetActive = true;
   }
 
   clearPowerUp(type: string): void {
@@ -169,6 +206,9 @@ export class Player {
     if (type === 'speed') this.speed = PLAYER_SPEED;
     if (type === 'shield') this.shieldActive = false;
     if (type === 'rapid') this.rapidActive = false;
+    if (type === 'pierce') this.pierceActive = false;
+    if (type === 'bounce') this.bounceActive = false;
+    if (type === 'coin_magnet') this.coinMagnetActive = false;
   }
 
   reset(): void {
@@ -179,6 +219,14 @@ export class Player {
     this.spreadActive = false;
     this.rapidActive = false;
     this.shieldActive = false;
+    this.pierceActive = false;
+    this.bounceActive = false;
+    this.coinMagnetActive = false;
+    this.invincible = false;
+    this.invincibleTimer = 0;
+    this.hitFlashTimer = 0;
+    (this.mesh.material as THREE.MeshBasicMaterial).color.setHex(0xffffff);
+    this.mesh.visible = true;
     if (this.shieldMesh) (this.shieldMesh.material as THREE.MeshBasicMaterial).visible = false;
   }
 

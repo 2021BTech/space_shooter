@@ -61,7 +61,7 @@ export class CollisionSystem {
       const p = powerups[i];
       if (!p.alive) continue;
       const dist = p.mesh.position.distanceTo(playerPos);
-      if (dist < 0.6) {
+      if (dist < 0.9) {
         hits.push(i);
       }
     }

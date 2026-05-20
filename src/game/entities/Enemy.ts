@@ -1,6 +1,18 @@
 import * as THREE from 'three';
-import type { EnemyType, EnemyData } from '../types';
+import type { EnemyType, EnemyData, Difficulty } from '../types';
 import { ENEMY_BASE_SPEED } from '../types';
+
+const DIFF_SPEED_MULT: Record<Difficulty, number> = {
+  easy: 0.7,
+  medium: 1.0,
+  hard: 1.3,
+};
+
+const DIFF_HP_BONUS: Record<Difficulty, number> = {
+  easy: 0,
+  medium: 0,
+  hard: 1,
+};
 
 function createEnemyTexture(type: EnemyType): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
@@ -170,6 +182,92 @@ function createEnemyTexture(type: EnemyType): THREE.CanvasTexture {
       ctx.strokeRect(cx - 24, cy - 20, 48, 40);
       break;
     }
+    case 'swarm': {
+      ctx.fillStyle = '#88bb00';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 16, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#668800';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 4, 10, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#aadd00';
+      ctx.beginPath();
+      ctx.arc(cx - 5, cy - 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + 5, cy - 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ccff00';
+      ctx.beginPath();
+      ctx.arc(cx - 5, cy - 2, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + 5, cy - 2, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#aadd00';
+      ctx.beginPath();
+      ctx.moveTo(cx - 2, cy + 4);
+      ctx.lineTo(cx + 2, cy + 4);
+      ctx.lineTo(cx, cy + 12);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#ddee44';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      break;
+    }
+    case 'boss': {
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 32);
+      grad.addColorStop(0, '#440022');
+      grad.addColorStop(0.5, '#880044');
+      grad.addColorStop(1, '#cc0044');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 30);
+      ctx.lineTo(cx + 28, cy - 10);
+      ctx.lineTo(cx + 30, cy + 10);
+      ctx.lineTo(cx + 16, cy + 28);
+      ctx.lineTo(cx - 16, cy + 28);
+      ctx.lineTo(cx - 30, cy + 10);
+      ctx.lineTo(cx - 28, cy - 10);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#ff0044';
+      ctx.beginPath();
+      ctx.arc(cx - 8, cy - 4, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + 8, cy - 4, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ff4488';
+      ctx.beginPath();
+      ctx.arc(cx - 8, cy - 4, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + 8, cy - 4, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#aa0033';
+      ctx.beginPath();
+      ctx.moveTo(cx - 6, cy + 6);
+      ctx.lineTo(cx + 6, cy + 6);
+      ctx.lineTo(cx, cy + 14);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#ff4488';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      break;
+    }
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -186,9 +284,11 @@ function getEnemyTex(type: EnemyType): THREE.CanvasTexture {
   return textureCache.get(type)!;
 }
 
-export function createEnemy(type: EnemyType, x: number, y: number, difficulty: number, scale: number = 1): EnemyData {
+export function createEnemy(type: EnemyType, x: number, y: number, level: number, scale: number = 1, difficulty: Difficulty = 'medium'): EnemyData {
   const tex = getEnemyTex(type);
-  const speedMult = 1 + difficulty * 0.1;
+  const speedMult = 1 + (level - 1) * 0.04;
+  const diffSpeedMult = DIFF_SPEED_MULT[difficulty];
+  const hpBonus = DIFF_HP_BONUS[difficulty];
   let size = 0.8 * scale;
   let hp = 1;
   let speed = ENEMY_BASE_SPEED;
@@ -197,25 +297,36 @@ export function createEnemy(type: EnemyType, x: number, y: number, difficulty: n
   switch (type) {
     case 'basic':
       size = 0.8 * scale;
-      hp = 1;
-      speed = ENEMY_BASE_SPEED * speedMult;
+      hp = 1 + hpBonus;
+      speed = ENEMY_BASE_SPEED * speedMult * diffSpeedMult;
       break;
     case 'shooter':
       size = 0.9 * scale;
-      hp = 1;
-      speed = ENEMY_BASE_SPEED * 0.8 * speedMult;
+      hp = 1 + hpBonus;
+      speed = ENEMY_BASE_SPEED * 0.8 * speedMult * diffSpeedMult;
       fireInterval = 2.0 / speedMult;
       break;
     case 'fast':
       size = 0.6 * scale;
-      hp = 1;
-      speed = ENEMY_BASE_SPEED * 1.8 * speedMult;
+      hp = 1 + hpBonus;
+      speed = ENEMY_BASE_SPEED * 1.8 * speedMult * diffSpeedMult;
       break;
     case 'tank':
       size = 1.2 * scale;
-      hp = 3;
-      speed = ENEMY_BASE_SPEED * 0.5 * speedMult;
+      hp = 3 + hpBonus;
+      speed = ENEMY_BASE_SPEED * 0.5 * speedMult * diffSpeedMult;
       fireInterval = 3.0 / speedMult;
+      break;
+    case 'swarm':
+      size = 0.4 * scale;
+      hp = 1 + hpBonus;
+      speed = ENEMY_BASE_SPEED * 2.5 * speedMult * diffSpeedMult;
+      break;
+    case 'boss':
+      size = 2.0 * scale;
+      hp = 8 + level - 1 + hpBonus;
+      speed = ENEMY_BASE_SPEED * 0.3 * diffSpeedMult;
+      fireInterval = 1.5 / speedMult;
       break;
   }
 

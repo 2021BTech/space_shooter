@@ -1,20 +1,39 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { submitScore } from '../services/leaderboardService';
-
-const STORAGE_KEY = 'space-shooter-player-name';
+import { addCoins } from '../services/coinService';
+import { checkNewAchievements } from '../services/achievementService';
+import { Settings } from '../services/settingsService';
+import type { RunStats } from '../game/types';
 
 interface GameOverScreenProps {
   score: number;
   level: number;
+  runCoins: number;
+  runStats: RunStats;
   onRestart: () => void;
 }
 
-export function GameOverScreen({ score, level, onRestart }: GameOverScreenProps) {
-  const [playerName, setPlayerName] = useState(() => localStorage.getItem(STORAGE_KEY) || '');
+export function GameOverScreen({ score, level, runCoins, runStats, onRestart }: GameOverScreenProps) {
+  const [playerName, setPlayerName] = useState(() => Settings.playerName);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [lowerScoreMsg, setLowerScoreMsg] = useState('');
+  const [newAchievements, setNewAchievements] = useState<string[]>([]);
+
+  useEffect(() => {
+    const newIds = checkNewAchievements(
+      runStats,
+      score,
+      level,
+      runCoins,
+      new Set(runStats.powerupTypes),
+      false,
+    );
+    if (newIds.length > 0) {
+      setNewAchievements(newIds);
+    }
+  }, []);
 
   async function handleSubmit() {
     const name = playerName.trim();
@@ -27,9 +46,15 @@ export function GameOverScreen({ score, level, onRestart }: GameOverScreenProps)
     const result = await submitScore(name, score, level);
 
     if (result.submitted) {
-      localStorage.setItem(STORAGE_KEY, name);
+      Settings.playerName = name;
+      if (runCoins > 0) {
+        await addCoins(name, runCoins);
+      }
       setSubmitted(true);
     } else if (result.reason === 'lower_score') {
+      if (runCoins > 0) {
+        await addCoins(name, runCoins);
+      }
       setLowerScoreMsg(`Your best is ${result.bestScore.toLocaleString()} — keep trying!`);
     } else {
       setSubmitError(true);
@@ -87,6 +112,45 @@ export function GameOverScreen({ score, level, onRestart }: GameOverScreenProps)
       }}>
         LEVEL {level}
       </div>
+
+      <div style={{
+        fontSize: 16,
+        color: '#ffdd44',
+        letterSpacing: 1,
+        marginBottom: 8,
+        opacity: 0.8,
+      }}>
+        🪙 {runCoins} coins collected
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '4px 20px',
+        fontSize: 11,
+        opacity: 0.5,
+        marginBottom: 20,
+        textAlign: 'center',
+      }}>
+        <div>Kills: {runStats.enemiesKilled}</div>
+        <div>Bosses: {runStats.bossKills}</div>
+        <div>Max Combo: x{runStats.maxCombo}</div>
+        <div>PowerUps: {runStats.powerupsCollected}</div>
+        <div>Time: {Math.floor(runStats.timeSurvived)}s</div>
+        <div>Level: {level}</div>
+      </div>
+
+      {newAchievements.length > 0 && (
+        <div style={{
+          fontSize: 12, color: '#ffdd44', marginBottom: 12,
+          textShadow: '0 0 10px rgba(255,200,0,0.3)',
+          letterSpacing: 1,
+        }}>
+          {newAchievements.map((id) => (
+            <div key={id}>🏅 Achievement Unlocked!</div>
+          ))}
+        </div>
+      )}
 
       {!submitted && (
         <div style={{

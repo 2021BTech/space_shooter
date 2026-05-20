@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Leaderboard } from "./Leaderboard";
+import { Settings } from "../services/settingsService";
+import type { Difficulty } from "../game/types";
 
 const STAR_STYLES = [0, 1, 2, 3, 4, 5].map((i) => ({
   width: 2 + Math.random() * 3,
@@ -14,11 +16,24 @@ const STAR_STYLES = [0, 1, 2, 3, 4, 5].map((i) => ({
 }));
 
 interface StartScreenProps {
-  onStart: () => void;
+  onStart: (difficulty: Difficulty) => void;
 }
+
+const DIFFICULTIES: { key: Difficulty; label: string; color: string; desc: string }[] = [
+  { key: 'easy', label: 'EASY', color: '#44dd66', desc: 'Slower enemies, 1.5x score' },
+  { key: 'medium', label: 'MEDIUM', color: '#ffdd44', desc: 'Standard pace' },
+  { key: 'hard', label: 'HARD', color: '#ff4444', desc: 'Faster enemies, 0.7x score' },
+];
 
 export function StartScreen({ onStart }: StartScreenProps) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [coinBalance, setCoinBalance] = useState<number>(Settings.coins);
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCoinBalance(Settings.coins);
+  }, []);
 
   if (showLeaderboard) {
     return <Leaderboard onClose={() => setShowLeaderboard(false)} />;
@@ -96,7 +111,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
         style={{
           fontSize: 14,
           opacity: 0.5,
-          marginBottom: 40,
+          marginBottom: 20,
           letterSpacing: 2,
           textAlign: "center",
           lineHeight: 1.8,
@@ -106,8 +121,60 @@ export function StartScreen({ onStart }: StartScreenProps) {
         ARROWS / WASD — Move &nbsp;|&nbsp; SPACE — Fire
       </div>
 
+      <div style={{
+        display: "flex",
+        gap: 10,
+        marginBottom: 24,
+        position: "relative",
+      }}>
+        {DIFFICULTIES.map((d) => (
+          <button
+            key={d.key}
+            onClick={() => setDifficulty(d.key)}
+            style={{
+              padding: "8px 18px",
+              fontSize: 13,
+              fontFamily: "'Courier New', monospace",
+              fontWeight: "bold",
+              letterSpacing: 2,
+              color: difficulty === d.key ? '#fff' : d.color,
+              background: difficulty === d.key ? d.color + '30' : 'transparent',
+              border: difficulty === d.key
+                ? `2px solid ${d.color}`
+                : `1px solid ${d.color}66`,
+              borderRadius: 4,
+              cursor: "pointer",
+              transition: "all 0.2s",
+              opacity: difficulty === d.key ? 1 : 0.7,
+              boxShadow: difficulty === d.key ? `0 0 15px ${d.color}40` : 'none',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '1';
+              e.currentTarget.style.background = d.color + '20';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = difficulty === d.key ? '1' : '0.7';
+              e.currentTarget.style.background = difficulty === d.key ? d.color + '30' : 'transparent';
+            }}
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{
+        fontSize: 11,
+        color: DIFFICULTIES.find(d => d.key === difficulty)?.color ?? '#ffdd44',
+        opacity: 0.6,
+        marginBottom: 20,
+        letterSpacing: 1,
+        position: "relative",
+      }}>
+        {DIFFICULTIES.find(d => d.key === difficulty)?.desc}
+      </div>
+
       <button
-        onClick={onStart}
+        onClick={() => onStart(difficulty)}
         style={{
           padding: "14px 48px",
           fontSize: 18,
@@ -173,6 +240,21 @@ export function StartScreen({ onStart }: StartScreenProps) {
       >
         LEADERBOARD
       </button>
+
+      {coinBalance > 0 && (
+        <div
+          style={{
+            marginTop: 16,
+            fontSize: 13,
+            color: "#ffdd44",
+            opacity: 0.7,
+            letterSpacing: 1,
+            position: "relative",
+          }}
+        >
+          🪙 {coinBalance.toLocaleString()} lifetime coins
+        </div>
+      )}
 
       <div
         style={{

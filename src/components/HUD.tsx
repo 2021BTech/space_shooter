@@ -5,7 +5,10 @@ interface HUDProps {
   lives: number;
   level: number;
   powerUp: PowerUpType | null;
+  runCoins: number;
+  muted: boolean;
   onPause: () => void;
+  onToggleMute: () => void;
 }
 
 const powerUpLabels: Record<PowerUpType, string> = {
@@ -14,6 +17,9 @@ const powerUpLabels: Record<PowerUpType, string> = {
   speed: 'SPEED',
   rapid: 'RAPID',
   extra_life: '+1 ❤',
+  pierce: 'PIERCE',
+  bounce: 'BOUNCE',
+  coin_magnet: 'MAGNET',
 };
 
 const powerUpColors: Record<PowerUpType, string> = {
@@ -22,9 +28,12 @@ const powerUpColors: Record<PowerUpType, string> = {
   speed: '#ffff44',
   rapid: '#ff4444',
   extra_life: '#ff3366',
+  pierce: '#44aaff',
+  bounce: '#44dd66',
+  coin_magnet: '#ffaa44',
 };
 
-export function HUD({ score, lives, level, powerUp, onPause }: HUDProps) {
+export function HUD({ score, lives, level, powerUp, runCoins, muted, onPause, onToggleMute }: HUDProps) {
   return (
     <div style={{
       position: 'absolute',
@@ -67,30 +76,54 @@ export function HUD({ score, lives, level, powerUp, onPause }: HUDProps) {
             {powerUpLabels[powerUp]}
           </div>
         )}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onPause();
-          }}
-          style={{
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            borderRadius: 4,
-            color: '#fff',
-            fontFamily: "'Courier New', monospace",
-            fontSize: 11,
-            padding: '4px 12px',
-            cursor: 'pointer',
-            pointerEvents: 'auto',
-            letterSpacing: 1,
-          }}
-        >
-          II
-        </button>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleMute();
+            }}
+            title={muted ? 'Unmute' : 'Mute'}
+            style={{
+              background: muted ? 'rgba(255,50,50,0.15)' : 'rgba(255,255,255,0.08)',
+              border: muted ? '1px solid rgba(255,50,50,0.3)' : '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 4,
+              color: muted ? '#ff6666' : '#fff',
+              fontFamily: "'Courier New', monospace",
+              fontSize: 11,
+              padding: '4px 8px',
+              cursor: 'pointer',
+              pointerEvents: 'auto',
+              letterSpacing: 1,
+            }}
+          >
+            {muted ? 'M' : '♪'}
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onPause();
+            }}
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 4,
+              color: '#fff',
+              fontFamily: "'Courier New', monospace",
+              fontSize: 11,
+              padding: '4px 12px',
+              cursor: 'pointer',
+              pointerEvents: 'auto',
+              letterSpacing: 1,
+            }}
+          >
+            II
+          </button>
+        </div>
       </div>
 
       <div style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: 14, opacity: 0.6 }}>LIVES</div>
+        <div style={{ fontSize: 14, opacity: 0.6, color: '#ffdd44' }}>🪙 {runCoins}</div>
+        <div style={{ fontSize: 14, opacity: 0.6, marginTop: 4 }}>LIVES</div>
         <div style={{ fontSize: 24 }}>
           {Array.from({ length: lives }, (_, i) => (
             <span key={i} style={{ color: '#ff4444', marginLeft: 4 }}>♥</span>

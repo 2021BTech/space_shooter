@@ -1,6 +1,9 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
 import { Game } from '../game/Game';
-import { GameState, PowerUpType } from '../game/types';
+import { GameState, PowerUpType, emptyStats } from '../game/types';
+import type { RunStats, Difficulty } from '../game/types';
+import type { RunUpgrades } from '../components/UpgradeShop';
+import { Settings } from '../services/settingsService';
 
 export interface GameStateData {
   state: GameState;
@@ -8,16 +11,21 @@ export interface GameStateData {
   lives: number;
   powerUp: PowerUpType | null;
   level: number;
+  runCoins: number;
+  runStats: RunStats;
 }
 
 export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
   const gameRef = useRef<Game | null>(null);
+  const [muted, setMuted] = useState(() => Settings.muted);
   const [gameData, setGameData] = useState<GameStateData>({
     state: GameState.START,
     score: 0,
     lives: 3,
     powerUp: null,
     level: 1,
+    runCoins: 0,
+    runStats: emptyStats(),
   });
 
   const initGame = useCallback(() => {
@@ -36,11 +44,20 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
       onPowerUpChange: (powerUp) => {
         setGameData((prev) => ({ ...prev, powerUp }));
       },
-      onGameOver: (score) => {
-        setGameData((prev) => ({ ...prev, state: GameState.GAME_OVER, score }));
+      onGameOver: (score, stats) => {
+        setGameData((prev) => {
+          Settings.coins += prev.runCoins;
+          return { ...prev, state: GameState.GAME_OVER, score, runStats: stats };
+        });
       },
       onStateChange: (state) => {
         setGameData((prev) => ({ ...prev, state }));
+      },
+      onLevelUp: (level) => {
+        setGameData((prev) => ({ ...prev, level }));
+      },
+      onCoinsChange: (coins) => {
+        setGameData((prev) => ({ ...prev, runCoins: coins }));
       },
     });
 
@@ -48,22 +65,48 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
     return game;
   }, [canvasRef]);
 
-  const startGame = useCallback(() => {
+  const startUpgrade = useCallback(() => {
     const game = gameRef.current || initGame();
     if (game) {
-      setGameData({
-        state: GameState.PLAYING,
-        score: 0,
-        lives: 3,
-        powerUp: null,
-        level: 1,
-      });
-      game.start();
+      setGameData((prev) => ({ ...prev, state: GameState.UPGRADE, runCoins: 0 }));
     }
   }, [initGame]);
 
+  const startGame = useCallback((upgrades?: RunUpgrades, difficulty?: Difficulty) => {
+    const game = gameRef.current;
+    if (!game) return;
+
+    const baseLives = 3;
+    const lives = baseLives + (upgrades?.extraLife || 0);
+
+    setGameData({
+      state: GameState.PLAYING,
+      score: 0,
+      lives,
+      powerUp: null,
+      level: 1,
+      runCoins: 0,
+      runStats: emptyStats(),
+    });
+
+    game.start(difficulty);
+
+    if (upgrades?.shield) game.applyRunUpgrade('shield');
+    if (upgrades?.spread) game.applyRunUpgrade('spread');
+    if (upgrades?.speed) game.applyRunUpgrade('speed');
+  }, []);
+
   const togglePause = useCallback(() => {
     gameRef.current?.togglePause();
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    gameRef.current?.toggleMute();
+    setMuted((m) => {
+      const next = !m;
+      Settings.muted = next;
+      return next;
+    });
   }, []);
 
   const handleRestart = useCallback(() => {
@@ -73,6 +116,8 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
       lives: 3,
       powerUp: null,
       level: 1,
+      runCoins: 0,
+      runStats: emptyStats(),
     });
   }, []);
 
@@ -99,9 +144,12 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
 
   return {
     gameData,
+    muted,
     initGame,
     startGame,
+    startUpgrade,
     togglePause,
+    toggleMute,
     handleRestart,
     setTouch,
     clearTouch,
