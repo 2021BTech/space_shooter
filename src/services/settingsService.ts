@@ -8,6 +8,7 @@ const KEYS = {
   ACHIEVEMENTS: `${PREFIX}-achievements`,
   LIFETIME_KILLS: `${PREFIX}-lifetime-kills`,
   COINS: `${PREFIX}-coins`,
+  AUTO_FIRE: `${PREFIX}-auto-fire`,
 } as const;
 
 const DEFAULTS: Record<string, SettingValue> = {
@@ -16,6 +17,7 @@ const DEFAULTS: Record<string, SettingValue> = {
   [KEYS.ACHIEVEMENTS]: [],
   [KEYS.LIFETIME_KILLS]: 0,
   [KEYS.COINS]: 0,
+  [KEYS.AUTO_FIRE]: false,
 };
 
 function getString(key: string): string {
@@ -88,4 +90,7 @@ export const Settings = {
 
   get coins(): number { return getNumber(KEYS.COINS); },
   set coins(v: number) { setNumber(KEYS.COINS, v); },
+
+  get autoFirePurchased(): boolean { return getBool(KEYS.AUTO_FIRE); },
+  set autoFirePurchased(v: boolean) { setBool(KEYS.AUTO_FIRE, v); },
 };

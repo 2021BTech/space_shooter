@@ -17,6 +17,10 @@ interface UpgradeItem {
   description: string;
 }
 
+const PERMANENT_UPGRADES = [
+  { key: 'autoFire', label: 'Auto-Fire', cost: 500, description: 'Always fire automatically' },
+] as const;
+
 const UPGRADES: UpgradeItem[] = [
   { key: 'extraLife', label: 'Extra Life', cost: 100, maxStack: 2, description: '+1 life' },
   { key: 'shield', label: 'Shield Start', cost: 75, description: 'Start with shield' },
@@ -104,13 +108,58 @@ export function UpgradeShop({ onStart, onBack }: UpgradeShopProps) {
         fontSize: 36, fontWeight: 'bold', letterSpacing: 6,
         textShadow: '0 0 20px rgba(255,200,0,0.4)', margin: 0, marginBottom: 8,
       }}>
-        UPGRADE
+        UPGRADE SHOP
       </h1>
 
       <div style={{
         fontSize: 16, color: '#ffdd44', marginBottom: 24, letterSpacing: 1,
       }}>
         Balance: 🪙 {balance.toLocaleString()}
+      </div>
+
+      <div style={{ fontSize: 13, opacity: 0.5, marginBottom: 6, letterSpacing: 1 }}>
+        — PERMANENT UPGRADES —
+      </div>
+
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20,
+        width: 300,
+      }}>
+        {PERMANENT_UPGRADES.map((u) => {
+          const owned = u.key === 'autoFire' ? Settings.autoFirePurchased : false;
+          const canBuy = !owned && totalCost + u.cost <= balance;
+          return (
+            <div key={u.key} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '8px 12px',
+              background: owned ? 'rgba(0,220,255,0.1)' : 'rgba(255,255,255,0.03)',
+              border: owned ? '1px solid rgba(0,220,255,0.3)' : '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 4, cursor: canBuy ? 'pointer' : 'default',
+            }}
+              onClick={() => {
+                if (!canBuy) return;
+                Settings.coins -= u.cost;
+                if (u.key === 'autoFire') Settings.autoFirePurchased = true;
+                setBalance(Settings.coins);
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 'bold' }}>{u.label}</div>
+                <div style={{ fontSize: 11, opacity: 0.5 }}>{u.description}</div>
+              </div>
+              <div style={{
+                fontSize: 13, color: owned ? '#00ddff' : '#ffdd44',
+                minWidth: 60, textAlign: 'right',
+              }}>
+                {owned ? '✔' : `🪙${u.cost}`}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ fontSize: 13, opacity: 0.5, marginBottom: 6, letterSpacing: 1 }}>
+        — RUN UPGRADES —
       </div>
 
       <div style={{

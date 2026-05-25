@@ -13,6 +13,7 @@ export interface GameStateData {
   level: number;
   runCoins: number;
   runStats: RunStats;
+  autoFire: boolean;
 }
 
 export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
@@ -26,6 +27,7 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
     level: 1,
     runCoins: 0,
     runStats: emptyStats(),
+    autoFire: false,
   });
 
   const initGame = useCallback(() => {
@@ -59,6 +61,9 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
       onCoinsChange: (coins) => {
         setGameData((prev) => ({ ...prev, runCoins: coins }));
       },
+      onAutoFireChange: (active) => {
+        setGameData((prev) => ({ ...prev, autoFire: active }));
+      },
     });
 
     gameRef.current = game;
@@ -87,9 +92,11 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
       level: 1,
       runCoins: 0,
       runStats: emptyStats(),
+      autoFire: Settings.autoFirePurchased,
     });
 
-    game.start(difficulty);
+    const autoFire = Settings.autoFirePurchased;
+    game.start(difficulty, autoFire);
 
     if (upgrades?.shield) game.applyRunUpgrade('shield');
     if (upgrades?.spread) game.applyRunUpgrade('spread');
@@ -118,6 +125,7 @@ export function useGame(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
       level: 1,
       runCoins: 0,
       runStats: emptyStats(),
+      autoFire: false,
     });
   }, []);
 

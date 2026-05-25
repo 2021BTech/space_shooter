@@ -7,6 +7,7 @@ interface HUDProps {
   powerUp: PowerUpType | null;
   runCoins: number;
   muted: boolean;
+  autoFire: boolean;
   onPause: () => void;
   onToggleMute: () => void;
 }
@@ -33,7 +34,7 @@ const powerUpColors: Record<PowerUpType, string> = {
   coin_magnet: '#ffaa44',
 };
 
-export function HUD({ score, lives, level, powerUp, runCoins, muted, onPause, onToggleMute }: HUDProps) {
+export function HUD({ score, lives, level, powerUp, runCoins, muted, autoFire, onPause, onToggleMute }: HUDProps) {
   return (
     <div style={{
       position: 'absolute',
@@ -52,6 +53,17 @@ export function HUD({ score, lives, level, powerUp, runCoins, muted, onPause, on
     }}>
       <div>
         <div style={{ fontSize: 14, opacity: 0.6 }}>SCORE</div>
+        {autoFire && (
+          <div style={{
+            fontSize: 11,
+            color: '#00ddff',
+            textShadow: '0 0 10px rgba(0,220,255,0.6)',
+            letterSpacing: 1,
+            marginTop: 2,
+          }}>
+            ⚡ AUTO
+          </div>
+        )}
         <div style={{ fontSize: 28, fontWeight: 'bold', letterSpacing: 2 }}>
           {String(score).padStart(6, '0')}
         </div>

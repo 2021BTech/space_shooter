@@ -126,6 +126,7 @@ export interface GameCallbacks {
   onStateChange: (state: GameState) => void;
   onLevelUp?: (level: number) => void;
   onCoinsChange?: (coins: number) => void;
+  onAutoFireChange?: (active: boolean) => void;
 }
 
 export const GAME_WIDTH = 20;

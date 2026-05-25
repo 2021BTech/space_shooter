@@ -172,6 +172,7 @@ export default function App() {
             powerUp={gameData.powerUp}
             runCoins={gameData.runCoins}
             muted={muted}
+            autoFire={gameData.autoFire}
             onPause={togglePause}
             onToggleMute={toggleMute}
           />
@@ -214,6 +215,7 @@ export default function App() {
             powerUp={gameData.powerUp}
             runCoins={gameData.runCoins}
             muted={muted}
+            autoFire={gameData.autoFire}
             onPause={togglePause}
             onToggleMute={toggleMute}
           />

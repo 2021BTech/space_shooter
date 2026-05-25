@@ -77,6 +77,7 @@ export class Game {
   private runDuration = 0;
   private difficulty: Difficulty = 'medium';
   private scoreMult = 1.0;
+  private autoFire = false;
   powerupTypesCollected: Set<string> = new Set();
 
   get state(): GameState {
@@ -143,11 +144,13 @@ export class Game {
     this.loop = this.loop.bind(this);
   }
 
-  start(difficulty?: Difficulty): void {
+  start(difficulty?: Difficulty, autoFire?: boolean): void {
     if (difficulty) {
       this.difficulty = difficulty;
       this.spawn.setDifficultyMode(difficulty);
     }
+    this.autoFire = autoFire ?? false;
+    this.callbacks.onAutoFireChange?.(this.autoFire);
     this.reset();
     this._state = GS.PLAYING;
     this.lastTime = performance.now();
@@ -163,6 +166,7 @@ export class Game {
     this.activePowerUp = null;
     this.player.mesh.visible = true;
     this.player.reset();
+    this.player.autoFire = this.autoFire;
     this.player.speed = PLAYER_SPEED * config.playerSpeedMult;
     this.clearEntities();
     this.particles.clear();
@@ -536,6 +540,10 @@ export class Game {
     if (newLevel > this.currentLevel) {
       this.currentLevel = newLevel;
       this.callbacks.onLevelUp?.(newLevel);
+      if (newLevel >= 3 && !this.autoFire) {
+        this.player.autoFire = true;
+        this.callbacks.onAutoFireChange?.(true);
+      }
     }
   }
 

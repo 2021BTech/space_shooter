@@ -53,6 +53,7 @@ export class Player {
   pierceActive = false;
   bounceActive = false;
   coinMagnetActive = false;
+  autoFire = false;
   invincible = false;
   private invincibleTimer = 0;
   private hitFlashTimer = 0;
@@ -178,11 +179,13 @@ export class Player {
       (this.shieldMesh.material as THREE.MeshBasicMaterial).visible = this.shieldActive;
     }
 
+    const effectiveFirePressed = firePressed || this.autoFire;
+
     this.fireTimer -= dt;
     let fired = false;
     const spread = this.spreadActive;
 
-    if (firePressed && this.fireTimer <= 0) {
+    if (effectiveFirePressed && this.fireTimer <= 0) {
       const interval = this.rapidActive ? 0.08 : this.fireInterval;
       this.fireTimer = interval;
       fired = true;
@@ -216,6 +219,7 @@ export class Player {
     this.alive = true;
     this.fireTimer = 0;
     this.speed = PLAYER_SPEED;
+    this.autoFire = false;
     this.spreadActive = false;
     this.rapidActive = false;
     this.shieldActive = false;
