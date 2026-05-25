@@ -145,6 +145,7 @@ export class Game {
   }
 
   start(difficulty?: Difficulty, autoFire?: boolean): void {
+    cancelAnimationFrame(this.animFrameId);
     if (difficulty) {
       this.difficulty = difficulty;
       this.spawn.setDifficultyMode(difficulty);
@@ -248,7 +249,9 @@ export class Game {
       this.camera.position.y = this.cameraBaseY;
     }
 
-    this.composer.render();
+    if (this._state !== GS.GAME_OVER) {
+      this.composer.render();
+    }
   }
 
   private update(dt: number): void {
@@ -766,8 +769,10 @@ export class Game {
         0xffff44,
         40
       );
+      this.player.alive = false;
       this.player.mesh.visible = false;
       this.audio.playGameOver();
+      this.input.reset();
       this.gameOverTimer = 2.0;
     } else {
       this.player.mesh.position.set(0, -4, 0);

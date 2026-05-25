@@ -86,6 +86,15 @@ export class InputManager {
     this._pauseToggle = true;
   }
 
+  reset(): void {
+    this.keys.clear();
+    this._touchX = 0;
+    this._touchY = 0;
+    this._touchActive = false;
+    this._touchFire = false;
+    this._pauseToggle = false;
+  }
+
   destroy(): void {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
