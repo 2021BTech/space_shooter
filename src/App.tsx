@@ -10,7 +10,7 @@ import { useGame } from './hooks/useGame';
 import { GameState, Difficulty } from './game/types';
 import './App.css';
 
-function PauseOverlay({ onResume }: { onResume: () => void }) {
+function PauseOverlay({ onResume, onRestart }: { onResume: () => void; onRestart: () => void }) {
   return (
     <div style={{
       position: 'absolute',
@@ -52,6 +52,33 @@ function PauseOverlay({ onResume }: { onResume: () => void }) {
         }}
       >
         RESUME
+      </button>
+
+      <button
+        onClick={onRestart}
+        style={{
+          marginTop: 14,
+          padding: '12px 40px',
+          fontSize: 16,
+          fontFamily: "'Courier New', monospace",
+          fontWeight: 'bold',
+          letterSpacing: 2,
+          color: '#ff6644',
+          background: 'rgba(255,50,20,0.08)',
+          border: '1px solid rgba(255,50,20,0.3)',
+          borderRadius: 4,
+          cursor: 'pointer',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255,50,20,0.15)';
+          e.currentTarget.style.borderColor = 'rgba(255,50,20,0.5)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255,50,20,0.08)';
+          e.currentTarget.style.borderColor = 'rgba(255,50,20,0.3)';
+        }}
+      >
+        RESTART
       </button>
 
       <div style={{
@@ -219,7 +246,7 @@ export default function App() {
             onPause={togglePause}
             onToggleMute={toggleMute}
           />
-          <PauseOverlay onResume={togglePause} />
+          <PauseOverlay onResume={togglePause} onRestart={handleRestart} />
         </>
       )}
 
