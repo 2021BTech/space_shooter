@@ -1,16 +1,16 @@
 import * as THREE from 'three';
-import type { BulletData } from '../types';
+import type { BulletData, BulletType } from '../types';
 
-export function createBulletTexture(): THREE.CanvasTexture {
+function makeBulletTexture(color1: string, color2: string, glow: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 32;
   canvas.height = 32;
   const ctx = canvas.getContext('2d')!;
   const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
   gradient.addColorStop(0, '#ffffff');
-  gradient.addColorStop(0.3, '#ffff00');
-  gradient.addColorStop(0.6, '#ff8800');
-  gradient.addColorStop(1, 'rgba(255, 136, 0, 0)');
+  gradient.addColorStop(0.3, color1);
+  gradient.addColorStop(0.6, color2);
+  gradient.addColorStop(1, glow);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 32, 32);
   const texture = new THREE.CanvasTexture(canvas);
@@ -18,25 +18,26 @@ export function createBulletTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+export function createBulletTexture(): THREE.CanvasTexture {
+  return makeBulletTexture('#ffff00', '#ff8800', 'rgba(255, 136, 0, 0)');
+}
+
 export function createEnemyBulletTexture(): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 24;
-  canvas.height = 24;
-  const ctx = canvas.getContext('2d')!;
-  const gradient = ctx.createRadialGradient(12, 12, 0, 12, 12, 12);
-  gradient.addColorStop(0, '#ffffff');
-  gradient.addColorStop(0.3, '#ff4444');
-  gradient.addColorStop(0.6, '#cc0000');
-  gradient.addColorStop(1, 'rgba(204, 0, 0, 0)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 24, 24);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.needsUpdate = true;
-  return texture;
+  return makeBulletTexture('#ff4444', '#cc0000', 'rgba(204, 0, 0, 0)');
+}
+
+export function createPierceBulletTexture(): THREE.CanvasTexture {
+  return makeBulletTexture('#88ddff', '#0088ff', 'rgba(0, 136, 255, 0)');
+}
+
+export function createBounceBulletTexture(): THREE.CanvasTexture {
+  return makeBulletTexture('#88ff88', '#00cc44', 'rgba(0, 204, 68, 0)');
 }
 
 let _bulletTex: THREE.CanvasTexture | null = null;
 let _enemyBulletTex: THREE.CanvasTexture | null = null;
+let _pierceTex: THREE.CanvasTexture | null = null;
+let _bounceTex: THREE.CanvasTexture | null = null;
 
 function getBulletTex(): THREE.CanvasTexture {
   if (!_bulletTex) _bulletTex = createBulletTexture();
@@ -48,9 +49,30 @@ function getEnemyBulletTex(): THREE.CanvasTexture {
   return _enemyBulletTex;
 }
 
-export function createBullet(x: number, y: number, isEnemy: boolean, scale: number = 1): BulletData {
-  const tex = isEnemy ? getEnemyBulletTex() : getBulletTex();
-  const s = 0.25 * scale;
+function getPierceTex(): THREE.CanvasTexture {
+  if (!_pierceTex) _pierceTex = createPierceBulletTexture();
+  return _pierceTex;
+}
+
+function getBounceTex(): THREE.CanvasTexture {
+  if (!_bounceTex) _bounceTex = createBounceBulletTexture();
+  return _bounceTex;
+}
+
+export function createBullet(x: number, y: number, isEnemy: boolean, scale: number = 1, bulletType: BulletType = 'normal'): BulletData {
+  let tex: THREE.CanvasTexture;
+  let s = 0.25 * scale;
+  if (isEnemy) {
+    tex = getEnemyBulletTex();
+  } else if (bulletType === 'pierce') {
+    tex = getPierceTex();
+    s = 0.35 * scale;
+  } else if (bulletType === 'bounce') {
+    tex = getBounceTex();
+    s = 0.2 * scale;
+  } else {
+    tex = getBulletTex();
+  }
   const geo = new THREE.PlaneGeometry(s, s);
   const mat = new THREE.MeshBasicMaterial({
     map: tex,
@@ -66,5 +88,7 @@ export function createBullet(x: number, y: number, isEnemy: boolean, scale: numb
     velocity: new THREE.Vector2(0, speed),
     isEnemy,
     alive: true,
+    bulletType,
+    pierceHits: 0,
   };
 }

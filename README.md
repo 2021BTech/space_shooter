@@ -1,73 +1,123 @@
-# React + TypeScript + Vite
+# Space Shooter
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A fast-paced 2D space shooter built with React, Three.js, and TypeScript. Dodge enemies, collect power-ups, and fight your way through increasingly difficult waves — including epic boss fights.
 
-Currently, two official plugins are available:
+## How to Play
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### Controls
 
-## React Compiler
+#### Keyboard (Desktop)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+  [W]          [↑]
+  [A][S][D]    [←][↓][→]     — Move your ship
+      [SPACE]                 — Fire (hold for continuous)
+      [ESC] / [P]             — Pause / Resume
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+#### Touch (Mobile)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+  [Joystick] ← drag to move   [FIRE] ← tap/hold to shoot
+```
+
+### Tutorial
+
+1. **Move** — Use WASD or Arrow keys to steer your ship around the screen. On mobile, drag the on-screen joystick.
+2. **Shoot** — Press and hold SPACE to fire at enemies. On mobile, tap and hold the FIRE button.
+3. **Survive** — Avoid enemy ships and their bullets. You have 3 lives per run.
+4. **Score** — Destroy enemies for points. Chain kills quickly for a combo multiplier (up to 5x).
+5. **Power-ups** — Collect glowing orbs that drop from destroyed enemies:
+   - 🔵 Spread — fires 5 bullets in a fan
+   - 🟢 Rapid — faster fire rate
+   - 🟡 Speed — faster movement
+   - 🔵 Shield — absorbs one hit
+   - 💜 Pierce — bullets pass through enemies
+   - 💚 Bounce — bullets bounce off walls
+   - 🟠 Coin Magnet — attracts nearby coins
+   - ❤️ Extra Life — +1 life (up to 5)
+6. **Coins** — Collect golden coins from enemies. Spend them in the Upgrade Shop.
+7. **Levels** — The higher your score, the harder the enemies get. Every 5 levels triggers a **boss wave**.
+8. **Auto-Fire** — Reach Level 3 or purchase the permanent upgrade to fire automatically!
+
+## Features
+
+- 6 enemy types: Basic, Shooter, Fast, Tank, Swarm, Boss
+- 8 power-ups with unique effects
+- Combo scoring system (up to 5x multiplier)
+- Progressive difficulty with boss waves every 5 levels
+- Coin economy with permanent and per-run upgrades
+- Persistent leaderboard (powered by Supabase)
+- Achievement system
+- Touch controls for mobile play
+- Auto-fire unlocks at Level 3 (or purchase permanently)
+- Bloom lighting and particle effects
+- PWA support
+
+## Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## Tech Stack
+
+- **React 19** — UI framework
+- **Three.js** — 3D/2D rendering
+- **TypeScript** — Type safety
+- **Vite** — Build tool
+- **Supabase** — Leaderboard backend
+- **PWA** — Offline support
+
+## Project Structure
+
+```
+src/
+├── components/     # React UI components
+│   ├── StartScreen.tsx
+│   ├── GameCanvas.tsx
+│   ├── HUD.tsx
+│   ├── UpgradeShop.tsx
+│   ├── GameOverScreen.tsx
+│   ├── TouchControls.tsx
+│   ├── Leaderboard.tsx
+│   └── AchievementsList.tsx
+├── game/           # Game engine (Three.js)
+│   ├── Game.ts              # Main game loop
+│   ├── types.ts             # Types & constants
+│   ├── entities/            # Game entities
+│   │   ├── Player.ts
+│   │   ├── Bullet.ts
+│   │   ├── Enemy.ts
+│   │   ├── Coin.ts
+│   │   └── PowerUp.ts
+│   ├── systems/             # Game systems
+│   │   ├── InputManager.ts
+│   │   ├── CollisionSystem.ts
+│   │   ├── SpawnSystem.ts
+│   │   ├── ParticleSystem.ts
+│   │   └── AudioManager.ts
+│   └── render/              # Rendering
+│       └── Starfield.ts
+├── hooks/          # React hooks
+│   └── useGame.ts
+├── services/       # Persistence & backend
+│   ├── settingsService.ts
+│   ├── coinService.ts
+│   ├── achievementService.ts
+│   └── leaderboardService.ts
+└── lib/            # Utilities
+    └── supabase.ts
+```
+
+Built with ❤️ by **beconwave solutions**

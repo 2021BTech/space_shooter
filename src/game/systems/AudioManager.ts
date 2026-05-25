@@ -1,5 +1,14 @@
 export class AudioManager {
   private ctx: AudioContext | null = null;
+  private _muted = false;
+
+  get muted(): boolean {
+    return this._muted;
+  }
+
+  toggleMute(): void {
+    this._muted = !this._muted;
+  }
 
   private ensureContext(): AudioContext {
     if (!this.ctx) {
@@ -11,7 +20,12 @@ export class AudioManager {
     return this.ctx;
   }
 
+  private guard(): boolean {
+    return this._muted;
+  }
+
   playShoot(): void {
+    if (this.guard()) return;
     const ctx = this.ensureContext();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -26,6 +40,7 @@ export class AudioManager {
   }
 
   playEnemyShoot(): void {
+    if (this.guard()) return;
     const ctx = this.ensureContext();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -40,6 +55,7 @@ export class AudioManager {
   }
 
   playExplosion(): void {
+    if (this.guard()) return;
     const ctx = this.ensureContext();
     const bufferSize = ctx.sampleRate * 0.2;
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -57,6 +73,7 @@ export class AudioManager {
   }
 
   playPowerUp(): void {
+    if (this.guard()) return;
     const ctx = this.ensureContext();
     const notes = [523.25, 659.25, 783.99];
     notes.forEach((freq, i) => {
@@ -74,6 +91,7 @@ export class AudioManager {
   }
 
   playHit(): void {
+    if (this.guard()) return;
     const ctx = this.ensureContext();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -102,6 +120,7 @@ export class AudioManager {
   }
 
   playGameOver(): void {
+    if (this.guard()) return;
     const ctx = this.ensureContext();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();

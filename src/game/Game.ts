@@ -7,13 +7,21 @@ import type {
   BulletData,
   EnemyData,
   PowerUpData,
+  CoinData,
+  RunStats,
+  Difficulty,
+  BulletType,
 } from './types';
 import {
   GameState as GS,
   GAME_WIDTH,
+  PLAYER_SPEED,
+  emptyStats,
+  getLevelFromScore,
 } from './types';
 import { Player } from './entities/Player';
 import { createBullet } from './entities/Bullet';
+import { createCoin } from './entities/Coin';
 import { InputManager } from './systems/InputManager';
 import { CollisionSystem } from './systems/CollisionSystem';
 import { SpawnSystem } from './systems/SpawnSystem';
@@ -21,6 +29,12 @@ import { ParticleSystem } from './systems/ParticleSystem';
 import { AudioManager } from './systems/AudioManager';
 import { Starfield } from './render/Starfield';
 import { EffectComposer, RenderPass, UnrealBloomPass } from 'three-stdlib';
+
+const DIFFICULTY_CONFIG: Record<Difficulty, { lives: number; scoreMult: number; playerSpeedMult: number }> = {
+  easy: { lives: 3, scoreMult: 1.5, playerSpeedMult: 1.0 },
+  medium: { lives: 3, scoreMult: 1.0, playerSpeedMult: 1.0 },
+  hard: { lives: 3, scoreMult: 0.7, playerSpeedMult: 1.2 },
+};
 
 export class Game {
   private renderer: THREE.WebGLRenderer;
@@ -32,6 +46,8 @@ export class Game {
   private bullets: BulletData[] = [];
   private enemies: EnemyData[] = [];
   private powerups: PowerUpData[] = [];
+  private coins: CoinData[] = [];
+  private coinsCollected = 0;
 
   private input: InputManager;
   private collision: CollisionSystem;
@@ -42,13 +58,27 @@ export class Game {
 
   private _state: GameState = GS.START;
   private score = 0;
+  private currentLevel = 1;
   private lives = 3;
   private activePowerUp: { type: PowerUpType; remaining: number } | null = null;
+  private hitStopTimer = 0;
+  private shakeIntensity = 0;
+  private comboCount = 0;
+  private comboTimer = 0;
+  private gameOverTimer = 0;
+  private cameraBaseX = 0;
+  private cameraBaseY = 0;
   private callbacks: GameCallbacks;
   private animFrameId: number = 0;
   private lastTime = 0;
   private gameHeight = 0;
   private _entityScale = 1;
+  private stats: RunStats = emptyStats();
+  private runDuration = 0;
+  private difficulty: Difficulty = 'medium';
+  private scoreMult = 1.0;
+  private autoFire = false;
+  powerupTypesCollected: Set<string> = new Set();
 
   get state(): GameState {
     return this._state;
@@ -79,6 +109,8 @@ export class Game {
       100
     );
     this.camera.position.z = 10;
+    this.cameraBaseX = this.camera.position.x;
+    this.cameraBaseY = this.camera.position.y;
 
     this.composer = new EffectComposer(this.renderer);
     const renderPass = new RenderPass(this.scene, this.camera);
@@ -112,7 +144,13 @@ export class Game {
     this.loop = this.loop.bind(this);
   }
 
-  start(): void {
+  start(difficulty?: Difficulty, autoFire?: boolean): void {
+    if (difficulty) {
+      this.difficulty = difficulty;
+      this.spawn.setDifficultyMode(difficulty);
+    }
+    this.autoFire = autoFire ?? false;
+    this.callbacks.onAutoFireChange?.(this.autoFire);
     this.reset();
     this._state = GS.PLAYING;
     this.lastTime = performance.now();
@@ -120,16 +158,31 @@ export class Game {
   }
 
   private reset(): void {
+    const config = DIFFICULTY_CONFIG[this.difficulty];
     this.score = 0;
-    this.lives = 3;
+    this.currentLevel = 1;
+    this.lives = config.lives;
+    this.scoreMult = config.scoreMult;
     this.activePowerUp = null;
     this.player.mesh.visible = true;
     this.player.reset();
+    this.player.autoFire = this.autoFire;
+    this.player.speed = PLAYER_SPEED * config.playerSpeedMult;
     this.clearEntities();
     this.particles.clear();
     this.spawn.reset();
+    this.coinsCollected = 0;
+    this.stats = emptyStats();
+    this.runDuration = 0;
+    this.powerupTypesCollected = new Set();
+    this.callbacks.onCoinsChange?.(0);
+    this.hitStopTimer = 0;
+    this.shakeIntensity = 0;
+    this.gameOverTimer = 0;
+    this.comboCount = 0;
+    this.comboTimer = 0;
     this.callbacks.onScoreChange(0);
-    this.callbacks.onLivesChange(3);
+    this.callbacks.onLivesChange(config.lives);
     this.callbacks.onPowerUpChange(null);
   }
 
@@ -154,6 +207,13 @@ export class Game {
       (p.mesh.material as THREE.MeshBasicMaterial).dispose();
     }
     this.powerups.length = 0;
+
+    for (const c of this.coins) {
+      this.scene.remove(c.mesh);
+      c.mesh.geometry.dispose();
+      (c.mesh.material as THREE.MeshBasicMaterial).dispose();
+    }
+    this.coins.length = 0;
   }
 
   private loop(time: number): void {
@@ -171,13 +231,50 @@ export class Game {
       this.update(dt);
     }
 
-    this.starfield.update(dt);
+    const px = this.player.mesh.position.x;
+    const py = this.player.mesh.position.y;
+    this.starfield.update(dt, px, py);
     this.particles.update(dt);
+
+    if (this.shakeIntensity > 0) {
+      const sx = (Math.random() - 0.5) * this.shakeIntensity * 0.3;
+      const sy = (Math.random() - 0.5) * this.shakeIntensity * 0.3;
+      this.camera.position.x = this.cameraBaseX + sx;
+      this.camera.position.y = this.cameraBaseY + sy;
+      this.shakeIntensity *= 0.9;
+      if (this.shakeIntensity < 0.01) this.shakeIntensity = 0;
+    } else {
+      this.camera.position.x = this.cameraBaseX;
+      this.camera.position.y = this.cameraBaseY;
+    }
 
     this.composer.render();
   }
 
   private update(dt: number): void {
+    if (this.gameOverTimer > 0) {
+      this.gameOverTimer -= dt;
+      this.shakeIntensity = Math.max(this.shakeIntensity, 0.8);
+      if (this.gameOverTimer <= 0) {
+        this._state = GS.GAME_OVER;
+        this.callbacks.onGameOver(this.score, {
+          ...this.stats,
+          powerupTypes: Array.from(this.powerupTypesCollected),
+        });
+      }
+    } else if (this.hitStopTimer > 0) {
+      dt *= 0.08;
+      this.hitStopTimer -= dt;
+    }
+
+    this.runDuration += dt;
+    this.stats.timeSurvived = this.runDuration;
+
+    this.comboTimer -= dt;
+    if (this.comboTimer <= 0) {
+      this.comboCount = 0;
+    }
+
     let dx = (this.input.left ? -1 : 0) + (this.input.right ? 1 : 0);
     let dy = (this.input.down ? -1 : 0) + (this.input.up ? 1 : 0);
 
@@ -202,29 +299,42 @@ export class Game {
     this.updateBullets(dt);
     this.updateEnemies(dt);
     this.updatePowerUps(dt);
+    this.updateCoins(dt);
     this.updateActivePowerUp(dt);
     this.difficultyScaling();
     this.checkCollisions();
+    this.checkLevelUp();
 
     const spawnResult = this.spawn.update(dt);
     for (const e of spawnResult.newEnemies) this.enemies.push(e);
     for (const p of spawnResult.newPowerUps) this.powerups.push(p);
   }
 
+  private getPlayerBulletType(): BulletType {
+    if (this.player.pierceActive) return 'pierce';
+    if (this.player.bounceActive) return 'bounce';
+    return 'normal';
+  }
+
   private spawnBullets(spread: boolean): void {
     const px = this.player.mesh.position.x;
     const py = this.player.mesh.position.y;
     const s = this._entityScale;
+    const bulletType = this.getPlayerBulletType();
 
     if (spread) {
-      for (let i = -1; i <= 1; i++) {
-        const bullet = createBullet(px + i * 0.3 * s, py + 0.6 * s, false, s);
-        bullet.velocity.set((Math.sin(i * 0.4) * 3 + 10) * s, 10 * s);
+      const count = 5;
+      const spreadAngle = 0.6;
+      for (let i = 0; i < count; i++) {
+        const t = (i / (count - 1)) - 0.5;
+        const angle = t * spreadAngle;
+        const bullet = createBullet(px, py + 0.6 * s, false, s, bulletType);
+        bullet.velocity.set(Math.sin(angle) * 10 * s, Math.cos(angle) * 10 * s);
         this.bullets.push(bullet);
         this.scene.add(bullet.mesh);
       }
     } else {
-      const bullet = createBullet(px, py + 0.6 * s, false, s);
+      const bullet = createBullet(px, py + 0.6 * s, false, s, bulletType);
       this.bullets.push(bullet);
       this.scene.add(bullet.mesh);
     }
@@ -237,21 +347,41 @@ export class Game {
       enemy.shootTimer -= dt;
       if (enemy.shootTimer <= 0) {
         enemy.shootTimer = enemy.fireInterval;
-        const bullet = createBullet(enemy.mesh.position.x, enemy.mesh.position.y - 0.5 * s, true, s);
-        const dx = this.player.mesh.position.x - enemy.mesh.position.x;
-        const dy = this.player.mesh.position.y - enemy.mesh.position.y;
-        const len = Math.sqrt(dx * dx + dy * dy);
-        if (len > 0) {
-          bullet.velocity.set((dx / len) * 5 * s, (dy / len) * 5 * s);
+
+        if (enemy.type === 'boss') {
+          for (let i = -2; i <= 2; i++) {
+            const bullet = createBullet(enemy.mesh.position.x, enemy.mesh.position.y - 0.5 * s, true, s);
+            const dx = this.player.mesh.position.x - enemy.mesh.position.x;
+            const dy = this.player.mesh.position.y - enemy.mesh.position.y;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len > 0) {
+              const angle = Math.atan2(dy, dx) + i * 0.2;
+              bullet.velocity.set(Math.cos(angle) * 5 * s, Math.sin(angle) * 5 * s);
+            }
+            this.bullets.push(bullet);
+            this.scene.add(bullet.mesh);
+          }
+          this.audio.playEnemyShoot();
+        } else {
+          const bullet = createBullet(enemy.mesh.position.x, enemy.mesh.position.y - 0.5 * s, true, s);
+          const dx = this.player.mesh.position.x - enemy.mesh.position.x;
+          const dy = this.player.mesh.position.y - enemy.mesh.position.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          if (len > 0) {
+            bullet.velocity.set((dx / len) * 5 * s, (dy / len) * 5 * s);
+          }
+          this.bullets.push(bullet);
+          this.scene.add(bullet.mesh);
+          this.audio.playEnemyShoot();
         }
-        this.bullets.push(bullet);
-        this.scene.add(bullet.mesh);
-        this.audio.playEnemyShoot();
       }
     }
   }
 
   private updateBullets(dt: number): void {
+    const hw = GAME_WIDTH / 2 + 1;
+    const hh = this.gameHeight / 2 + 1;
+
     for (let i = this.bullets.length - 1; i >= 0; i--) {
       const b = this.bullets[i];
       if (!b.alive) continue;
@@ -259,11 +389,16 @@ export class Game {
       b.mesh.position.x += b.velocity.x * dt;
       b.mesh.position.y += b.velocity.y * dt;
 
-      const hw = GAME_WIDTH / 2 + 1;
-      const hh = this.gameHeight / 2 + 1;
+      if (b.bulletType === 'bounce' && !b.isEnemy) {
+        if (b.mesh.position.x < -hw || b.mesh.position.x > hw) {
+          b.velocity.x *= -1;
+          b.mesh.position.x = Math.max(-hw, Math.min(hw, b.mesh.position.x));
+        }
+      }
+
       if (
-        b.mesh.position.x < -hw ||
-        b.mesh.position.x > hw ||
+        b.mesh.position.x < -hw - 1 ||
+        b.mesh.position.x > hw + 1 ||
         b.mesh.position.y > hh ||
         b.mesh.position.y < -hh
       ) {
@@ -317,6 +452,47 @@ export class Game {
     }
   }
 
+  private updateCoins(dt: number): void {
+    const px = this.player.mesh.position.x;
+    const py = this.player.mesh.position.y;
+    const hh = this.gameHeight / 2 + 1;
+
+    for (let i = this.coins.length - 1; i >= 0; i--) {
+      const c = this.coins[i];
+      if (!c.alive) {
+        this.scene.remove(c.mesh);
+        c.mesh.geometry.dispose();
+        (c.mesh.material as THREE.MeshBasicMaterial).dispose();
+        this.coins.splice(i, 1);
+        continue;
+      }
+
+      c.mesh.position.y += c.velocity.y * dt;
+      c.mesh.rotation.z += dt * 2;
+
+      const dx = px - c.mesh.position.x;
+      const dy = py - c.mesh.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const magnetRange = this.player.coinMagnetActive ? 3.0 : 0.9;
+      if (this.player.coinMagnetActive && dist < magnetRange && dist >= 0.9) {
+        const pull = 4 * dt;
+        c.mesh.position.x += dx * pull;
+        c.mesh.position.y += dy * pull;
+      }
+      if (dist < 0.9) {
+        c.alive = false;
+        this.coinsCollected += c.amount;
+        this.callbacks.onCoinsChange?.(this.coinsCollected);
+        this.particles.createExplosion(c.mesh.position.x, c.mesh.position.y, 0xffdd44, 12);
+        this.audio.playPowerUp();
+      }
+
+      if (c.mesh.position.y < -hh) {
+        c.alive = false;
+      }
+    }
+  }
+
   private updateActivePowerUp(dt: number): void {
     if (this.activePowerUp) {
       this.activePowerUp.remaining -= dt;
@@ -340,11 +516,35 @@ export class Game {
   }
 
   getLevel(): number {
-    return Math.floor(this.score / 500) + 1;
+    return getLevelFromScore(this.score);
   }
 
   private difficultyScaling(): void {
-    this.spawn.setDifficulty(this.score);
+    this.spawn.setDifficulty(this.currentLevel);
+  }
+
+  private triggerHitStop(duration: number): void {
+    this.hitStopTimer = duration;
+  }
+
+  private triggerShake(intensity: number): void {
+    this.shakeIntensity = intensity;
+  }
+
+  private getComboMultiplier(): number {
+    return Math.min(this.comboCount, 5);
+  }
+
+  private checkLevelUp(): void {
+    const newLevel = getLevelFromScore(this.score);
+    if (newLevel > this.currentLevel) {
+      this.currentLevel = newLevel;
+      this.callbacks.onLevelUp?.(newLevel);
+      if (newLevel >= 3 && !this.autoFire) {
+        this.player.autoFire = true;
+        this.callbacks.onAutoFireChange?.(true);
+      }
+    }
   }
 
   private removeBullet(bullet: BulletData): void {
@@ -368,13 +568,39 @@ export class Game {
       const enemy = this.enemies[hit.enemyIdx];
 
       if (bullet.alive && enemy.alive) {
-        this.removeBullet(bullet);
+        if (bullet.bulletType === 'pierce' && !bullet.isEnemy) {
+          bullet.pierceHits++;
+          if (bullet.pierceHits >= 3) {
+            this.removeBullet(bullet);
+          }
+        } else if (bullet.bulletType === 'bounce' && !bullet.isEnemy) {
+          this.removeBullet(bullet);
+        } else {
+          this.removeBullet(bullet);
+        }
         enemy.hp--;
 
         if (enemy.hp <= 0) {
           this.removeEnemy(enemy);
-          this.score += this.getScoreForEnemy(enemy.type);
+          this.comboCount++;
+          this.comboTimer = 1.0;
+          this.stats.enemiesKilled++;
+          this.stats.killsByType[enemy.type]++;
+          if (enemy.type === 'boss') this.stats.bossKills++;
+          this.stats.maxCombo = Math.max(this.stats.maxCombo, this.comboCount);
+          const comboMult = this.getComboMultiplier();
+          const baseScore = this.getScoreForEnemy(enemy.type);
+          const scoreValue = Math.floor(baseScore * comboMult * this.scoreMult);
+          this.score += scoreValue;
           this.callbacks.onScoreChange(this.score);
+          const displayScore = Math.floor(baseScore * comboMult * this.scoreMult);
+          this.particles.createScorePopup(enemy.mesh.position.x, enemy.mesh.position.y, displayScore);
+          if (comboMult > 1) {
+            this.particles.createTextPopup(
+              enemy.mesh.position.x, enemy.mesh.position.y - 0.6,
+              `x${comboMult}`, '#ffdd44'
+            );
+          }
           this.particles.createExplosion(
             enemy.mesh.position.x,
             enemy.mesh.position.y,
@@ -382,6 +608,34 @@ export class Game {
             50
           );
           this.audio.playExplosion();
+          this.triggerShake(0.15);
+
+          if (enemy.type === 'boss') {
+            const bossCoins = 50 + Math.floor(Math.random() * 51);
+            for (let i = 0; i < Math.min(bossCoins, 10); i++) {
+              const coin = createCoin(
+                enemy.mesh.position.x + (Math.random() - 0.5) * 2,
+                enemy.mesh.position.y + (Math.random() - 0.5) * 2,
+                this._entityScale,
+                1
+              );
+              this.coins.push(coin);
+              this.scene.add(coin.mesh);
+            }
+            this.particles.createTextPopup(
+              enemy.mesh.position.x, enemy.mesh.position.y + 1.5,
+              `+${bossCoins} COINS`, '#ffdd44'
+            );
+            this.particles.createExplosion(enemy.mesh.position.x, enemy.mesh.position.y, 0xff0066, 120);
+            this.triggerShake(1.0);
+          } else {
+            const coinRate = this.difficulty === 'easy' ? 0.2 : this.difficulty === 'medium' ? 0.1 : 0.05;
+            if (Math.random() < coinRate) {
+              const coin = createCoin(enemy.mesh.position.x, enemy.mesh.position.y, this._entityScale, 1);
+              this.coins.push(coin);
+              this.scene.add(coin.mesh);
+            }
+          }
         } else {
           this.particles.createExplosion(
             enemy.mesh.position.x,
@@ -399,7 +653,7 @@ export class Game {
     );
     for (const idx of enemyPlayerHits) {
       const enemy = this.enemies[idx];
-      if (!enemy.alive) continue;
+      if (!enemy.alive || this.player.invincible) continue;
       this.removeEnemy(enemy);
       this.particles.createExplosion(
         enemy.mesh.position.x,
@@ -426,7 +680,7 @@ export class Game {
     );
     for (const idx of enemyBulletHits) {
       const bullet = this.bullets[idx];
-      if (!bullet.alive) continue;
+      if (!bullet.alive || this.player.invincible) continue;
       this.removeBullet(bullet);
 
       if (this.player.shieldActive) {
@@ -450,9 +704,19 @@ export class Game {
       if (!powerup.alive) continue;
       powerup.alive = false;
 
+      this.stats.powerupsCollected++;
+      this.powerupTypesCollected.add(powerup.type);
+
       if (powerup.type === 'extra_life') {
         this.lives = Math.min(this.lives + 1, 5);
         this.callbacks.onLivesChange(this.lives);
+        this.audio.playPowerUp();
+      } else if (powerup.type === 'pierce' || powerup.type === 'bounce') {
+        if (this.activePowerUp) {
+          this.player.clearPowerUp(this.activePowerUp.type);
+        }
+        this.player.applyPowerUp(powerup.type);
+        this.callbacks.onPowerUpChange(powerup.type);
         this.audio.playPowerUp();
       } else {
         if (this.activePowerUp) {
@@ -483,26 +747,31 @@ export class Game {
     this.lives--;
     this.callbacks.onLivesChange(this.lives);
     this.audio.playHit();
+    this.player.flashHit();
+    this.triggerShake(0.5);
+    this.triggerHitStop(0.12);
+    this.comboCount = 0;
+    this.comboTimer = 0;
 
     if (this.lives <= 0) {
       this.particles.createExplosion(
         this.player.mesh.position.x,
         this.player.mesh.position.y,
         0xff4400,
-        120
+        60
       );
       this.particles.createExplosion(
         this.player.mesh.position.x,
         this.player.mesh.position.y,
         0xffff44,
-        80
+        40
       );
       this.player.mesh.visible = false;
       this.audio.playGameOver();
-      this._state = GS.GAME_OVER;
-      this.callbacks.onGameOver(this.score);
+      this.gameOverTimer = 2.0;
     } else {
       this.player.mesh.position.set(0, -4, 0);
+      this.player.setInvincible(2);
     }
   }
 
@@ -512,6 +781,8 @@ export class Game {
       case 'shooter': return 200;
       case 'fast': return 150;
       case 'tank': return 300;
+      case 'swarm': return 50;
+      case 'boss': return 1000;
     }
   }
 
@@ -521,6 +792,8 @@ export class Game {
       case 'shooter': return 0xff8800;
       case 'fast': return 0xffff44;
       case 'tank': return 0xaa2222;
+      case 'swarm': return 0x88ff00;
+      case 'boss': return 0xff0066;
     }
   }
 
@@ -531,6 +804,9 @@ export class Game {
       case 'speed': return 0xffff44;
       case 'rapid': return 0xff4444;
       case 'extra_life': return 0xff3366;
+      case 'pierce': return 0x44aaff;
+      case 'bounce': return 0x44dd66;
+      case 'coin_magnet': return 0xffaa44;
     }
   }
 
@@ -550,6 +826,8 @@ export class Game {
       this.camera.top = this.gameHeight / 2;
       this.camera.bottom = -this.gameHeight / 2;
       this.camera.updateProjectionMatrix();
+      this.cameraBaseX = this.camera.position.x;
+      this.cameraBaseY = this.camera.position.y;
 
       const bloom = this.composer.passes[1] as UnrealBloomPass;
       bloom.resolution.set(width, height);
@@ -559,6 +837,31 @@ export class Game {
       this.starfield.resize(GAME_WIDTH / 2, this.gameHeight / 2);
       this.spawn.setSize(GAME_WIDTH / 2, this.gameHeight / 2);
       this.spawn.setScale(this._entityScale);
+    }
+  }
+
+  toggleMute(): void {
+    this.audio.toggleMute();
+  }
+
+  get isMuted(): boolean {
+    return this.audio.muted;
+  }
+
+  setActivePowerUp(type: PowerUpType): void {
+    if (type === 'pierce' || type === 'bounce') {
+      this.player.applyPowerUp(type);
+      this.callbacks.onPowerUpChange(type);
+    } else {
+      this.activePowerUp = { type, remaining: 8 };
+      this.callbacks.onPowerUpChange(type);
+    }
+  }
+
+  applyRunUpgrade(type: PowerUpType): void {
+    this.player.applyPowerUp(type);
+    if (type !== 'pierce' && type !== 'bounce') {
+      this.setActivePowerUp(type);
     }
   }
 
@@ -572,6 +875,10 @@ export class Game {
 
   setTouchFire(firing: boolean): void {
     this.input.setTouchFire(firing);
+  }
+
+  getDifficulty(): Difficulty {
+    return this.difficulty;
   }
 
   destroy(): void {

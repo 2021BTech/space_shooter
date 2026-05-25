@@ -112,6 +112,84 @@ function createPowerUpTexture(type: PowerUpType): THREE.CanvasTexture {
       ctx.stroke();
       break;
     }
+    case 'pierce': {
+      ctx.fillStyle = '#44aaff';
+      ctx.shadowColor = '#44aaff';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#88ddff';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#88ddff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 16);
+      ctx.lineTo(cx, cy + 16);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      break;
+    }
+    case 'bounce': {
+      ctx.fillStyle = '#44dd66';
+      ctx.shadowColor = '#44dd66';
+      ctx.shadowBlur = 8;
+      ctx.strokeStyle = '#44dd66';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx - 10, cy - 4);
+      ctx.lineTo(cx, cy + 4);
+      ctx.lineTo(cx + 10, cy - 4);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx - 10, cy + 4);
+      ctx.lineTo(cx, cy + 12);
+      ctx.lineTo(cx + 10, cy + 4);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      break;
+    }
+    case 'coin_magnet': {
+      ctx.strokeStyle = '#ffaa44';
+      ctx.shadowColor = '#ffaa44';
+      ctx.shadowBlur = 8;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy - 3, 8, Math.PI, 0);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy + 3, 8, 0, Math.PI);
+      ctx.stroke();
+      ctx.fillStyle = '#ffaa44';
+      ctx.beginPath();
+      ctx.arc(cx, cy - 3, 8, Math.PI, 0);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx, cy + 3, 8, 0, Math.PI);
+      ctx.fill();
+      ctx.fillStyle = '#ffcc66';
+      ctx.beginPath();
+      ctx.arc(cx, cy - 3, 4, Math.PI, 0);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx, cy + 3, 4, 0, Math.PI);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(255,170,68,0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - 12, cy - 8);
+      ctx.lineTo(cx + 12, cy + 8);
+      ctx.moveTo(cx - 12, cy + 8);
+      ctx.lineTo(cx + 12, cy - 8);
+      ctx.stroke();
+      break;
+    }
   }
 
   const texture = new THREE.CanvasTexture(canvas);
